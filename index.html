@@ -137,7 +137,14 @@
     }
     .cat-chip.active { background: var(--primary); color: #ffffff; border-color: var(--primary); }
 
-    .song-lyrics { white-space: pre-wrap; font-size: 1.15rem; line-height: 1.6; margin-top: 15px; }
+    /* Brak zawijania tekstu pieśni – czcionka skaluje się automatycznie skryptem */
+    .song-lyrics { 
+      white-space: pre; 
+      font-size: 1.15rem; 
+      line-height: 1.5; 
+      margin-top: 15px; 
+      overflow-x: auto;
+    }
     .song-chords {
       white-space: pre-wrap; font-family: monospace; font-size: 1.1rem;
       color: var(--primary); background: var(--chords-bg); padding: 12px;
@@ -505,6 +512,47 @@
     return div;
   }
 
+  // Funkcja dynamicznie obliczająca i dopasowująca rozmiar czcionki
+  window.autoFitFontSize = function() {
+    const el = document.getElementById('view-lyrics');
+    if (!el || !el.innerText.trim()) return;
+
+    const containerWidth = el.clientWidth;
+    if (containerWidth === 0) return;
+
+    const lines = el.innerText.split('\n');
+    let longestLine = '';
+    lines.forEach(line => {
+      if (line.length > longestLine.length) {
+        longestLine = line;
+      }
+    });
+
+    if (!longestLine) return;
+
+    const measurer = document.createElement('span');
+    measurer.style.visibility = 'hidden';
+    measurer.style.whiteSpace = 'pre';
+    measurer.style.fontFamily = window.getComputedStyle(el).fontFamily;
+    measurer.style.fontWeight = window.getComputedStyle(el).fontWeight;
+    measurer.innerText = longestLine;
+    document.body.appendChild(measurer);
+
+    let fontSize = 28; 
+    const minFontSize = 10; 
+
+    while (fontSize > minFontSize) {
+      measurer.style.fontSize = fontSize + 'px';
+      if (measurer.getBoundingClientRect().width <= containerWidth) {
+        break;
+      }
+      fontSize -= 0.5;
+    }
+
+    document.body.removeChild(measurer);
+    el.style.fontSize = fontSize + 'px';
+  };
+
   window.openSong = function(id) {
     const song = songs.find(s => s.id === id);
     if (!song) return;
@@ -535,7 +583,17 @@
     }
 
     showView('view-single');
+
+    setTimeout(() => {
+      window.autoFitFontSize();
+    }, 50);
   };
+
+  window.addEventListener('resize', () => {
+    if (!document.getElementById('view-single').classList.contains('hidden')) {
+      window.autoFitFontSize();
+    }
+  });
 
   window.goBackFromSong = function() {
     showView(previousView);
@@ -808,3 +866,4 @@
 
 </body>
 </html>
+j
