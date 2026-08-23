@@ -137,7 +137,6 @@
     }
     .cat-chip.active { background: var(--primary); color: #ffffff; border-color: var(--primary); }
 
-    /* Brak zawijania tekstu pieśni – czcionka skaluje się automatycznie skryptem */
     .song-lyrics { 
       white-space: pre; 
       font-size: 1.15rem; 
@@ -233,7 +232,7 @@
 
     <div id="view-audio-container" class="hidden" style="margin-top: 15px;">
       <a id="view-audio-btn" href="#" target="_blank" class="btn btn-filled" style="background-color: #06d6a0; border-color: #06d6a0; color: #fff; margin-bottom: 0;">
-        🎵 Włącz nagranie do nauki
+        🎵 Włącz nagranie audio
       </a>
     </div>
 
@@ -321,6 +320,45 @@
   const ADMIN_PIN = "1234";
   const chromaticScale = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
+  // Obsługa instalacji PWA z parametrem ?install=true
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('install')) {
+      showInstallBanner();
+    }
+  });
+
+  function showInstallBanner() {
+    const banner = document.createElement('div');
+    banner.id = 'pwa-install-banner';
+    banner.innerHTML = `
+      <div style="position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-bg); border-top: 2px solid var(--primary); padding: 20px; box-shadow: 0 -5px 25px rgba(0,0,0,0.2); text-align: center; z-index: 9999;">
+        <h3 style="color: var(--primary); margin-bottom: 8px;">Zainstaluj aplikację Scholi</h3>
+        <p style="font-size: 0.9rem; color: var(--text-sub); margin-bottom: 15px;">Zainstaluj aplikację na telefonie, aby mieć do niej szybki dostęp bez przeglądarki.</p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+          <button id="pwa-install-btn" class="btn btn-filled" style="width: auto; padding: 10px 20px;">📲 Zainstaluj teraz</button>
+          <button onclick="document.getElementById('pwa-install-banner').remove()" class="btn btn-secondary" style="width: auto; padding: 10px 15px;">Później</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(banner);
+
+    document.getElementById('pwa-install-btn').addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        banner.remove();
+      } else {
+        alert("Aby zainstalować aplikację na systemie iOS (Safari), kliknij przycisk 'Udostępnij' i wybierz 'Do ekranu początkowego'.");
+      }
+    });
+  }
+
   // Motyw graficzny
   const savedTheme = localStorage.getItem('schola_theme') || 'light';
   if (savedTheme === 'dark') {
@@ -341,7 +379,6 @@
     }
   };
 
-  // Zarządzanie rolami (Admin / Gość)
   window.toggleAdminMode = function() {
     if (isAdmin) {
       isAdmin = false;
@@ -512,7 +549,6 @@
     return div;
   }
 
-  // Funkcja dynamicznie obliczająca i dopasowująca rozmiar czcionki
   window.autoFitFontSize = function() {
     const el = document.getElementById('view-lyrics');
     if (!el || !el.innerText.trim()) return;
@@ -821,8 +857,8 @@
         } else if (lower.startsWith("# tekst")) {
           currentMode = "lyrics";
           continue;
-        } else if (lower.startsWith("# audio")) {
-          audioUrl = line.replace(/^# audio\s*/i, '').trim();
+        } else if (lower.startsWith("url:")) {
+          audioUrl = line.replace(/^url:\s*/i, '').trim();
           continue;
         }
 
@@ -834,9 +870,9 @@
       }
 
       const newSongData = {
-        title: title,
-        category: category,
-        audioUrl: audioUrl,
+        title,
+        category,
+        audioUrl,
         lyrics: lyricsArr.join('\n').trim(),
         chords: chordsArr.join('\n').trim()
       };
@@ -845,7 +881,7 @@
         try {
           await addDoc(collection(db, "songs"), newSongData);
         } catch (e) {
-          console.error("Błąd zapisu do Firebase:", e);
+          console.error(e);
         }
       }
 
@@ -854,9 +890,7 @@
     }
 
     localStorage.setItem('schola_songs', JSON.stringify(songs));
-    alert(`Pomyślnie zaimportowano ${count} utworów!`);
-    document.getElementById('form-bulk-text').value = '';
-    renderAll();
+    alert(`Zaimportowano ${count} utworów!`);
     showView('view-songs');
   };
 
@@ -866,4 +900,3 @@
 
 </body>
 </html>
-j
