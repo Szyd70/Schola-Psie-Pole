@@ -4,7 +4,7 @@
   <link rel="icon" type="image/jpeg" href="IMG_20260817_103611.jpg">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schola dziecięca Psie Pole</title>
+  <title>Schola Dziecięca Psie Pole</title>
   <style>
     :root {
       --bg: #0b132b;
@@ -33,7 +33,7 @@
     .container { width: 100%; max-width: 500px; }
 
     .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    h1 { color: var(--primary); font-size: 1.8rem; }
+    h1 { color: var(--primary); font-size: 1.6rem; }
     .banner { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 12px; margin-bottom: 20px; }
 
     .btn {
@@ -112,7 +112,7 @@
   <!-- WIDOK GŁÓWNY -->
   <div id="view-home">
     <div class="header-top">
-      <h1>ŚPIEWNIK PSIE POLE</h1>
+      <h1>SCHOLA DZIECIĘCA</h1>
       <button class="btn btn-secondary btn-small" onclick="toggleTheme()" id="theme-btn">☀️ Jasny</button>
     </div>
     <img src="IMG_20260817_103611.jpg" class="banner" alt="Baner Śpiewnik">
@@ -236,8 +236,9 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+  // NOWE PROJECT ID Z TWOJEGO ZEBRANEGO PROJEKTU FIREBASE
   const firebaseConfig = {
-    projectId: "spiewnik-psie-pole"
+    projectId: "schola-dziecieca-psie-pole"
   };
 
   let db = null;
@@ -248,9 +249,10 @@
     console.warn("Błąd inicjalizacji Firebase:", e);
   }
 
-  let songs = JSON.parse(localStorage.getItem('spiewnik_songs') || '[]');
-  let archives = JSON.parse(localStorage.getItem('spiewnik_archives') || '[]');
-  let repertuarIds = JSON.parse(localStorage.getItem('spiewnik_repertuar') || '[]');
+  // ODSEPAROWANA PAMIĘĆ PODRĘCZNA LOCALSTORAGE (żeby dane nie mieszały się z drugą aplikacją)
+  let songs = JSON.parse(localStorage.getItem('schola_songs') || '[]');
+  let archives = JSON.parse(localStorage.getItem('schola_archives') || '[]');
+  let repertuarIds = JSON.parse(localStorage.getItem('schola_repertuar') || '[]');
 
   let activeCategory = 'Wszystkie';
   let currentSongId = null;
@@ -261,7 +263,7 @@
   const ADMIN_PIN = "1234";
   const chromaticScale = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
-  const savedTheme = localStorage.getItem('spiewnik_theme') || 'dark';
+  const savedTheme = localStorage.getItem('schola_theme') || 'dark';
   if (savedTheme === 'light') {
     document.documentElement.setAttribute('data-theme', 'light');
     document.getElementById('theme-btn').innerText = "🌙 Ciemny";
@@ -271,11 +273,11 @@
     const current = document.documentElement.getAttribute('data-theme');
     if (current === 'light') {
       document.documentElement.removeAttribute('data-theme');
-      localStorage.setItem('spiewnik_theme', 'dark');
+      localStorage.setItem('schola_theme', 'dark');
       document.getElementById('theme-btn').innerText = "☀️ Jasny";
     } else {
       document.documentElement.setAttribute('data-theme', 'light');
-      localStorage.setItem('spiewnik_theme', 'light');
+      localStorage.setItem('schola_theme', 'light');
       document.getElementById('theme-btn').innerText = "🌙 Ciemny";
     }
   };
@@ -295,7 +297,7 @@
           fetched.push({ id: docSnap.id, ...docSnap.data() });
         });
         songs = fetched;
-        localStorage.setItem('spiewnik_songs', JSON.stringify(songs));
+        localStorage.setItem('schola_songs', JSON.stringify(songs));
         renderAll();
       }
     } catch (e) {
@@ -505,7 +507,7 @@
     } else {
       repertuarIds.push(id);
     }
-    localStorage.setItem('spiewnik_repertuar', JSON.stringify(repertuarIds));
+    localStorage.setItem('schola_repertuar', JSON.stringify(repertuarIds));
     renderAll();
   };
 
@@ -515,7 +517,7 @@
     if (!name || repertuarIds.length === 0) return alert("Wpisz nazwę zestawu!");
 
     archives.push({ id: Date.now().toString(), name, songIds: [...repertuarIds] });
-    localStorage.setItem('spiewnik_archives', JSON.stringify(archives));
+    localStorage.setItem('schola_archives', JSON.stringify(archives));
     input.value = '';
     renderAll();
   };
@@ -524,14 +526,14 @@
     const arch = archives.find(a => a.id === id);
     if (!arch) return;
     repertuarIds = [...arch.songIds];
-    localStorage.setItem('spiewnik_repertuar', JSON.stringify(repertuarIds));
+    localStorage.setItem('schola_repertuar', JSON.stringify(repertuarIds));
     renderAll();
     showView('view-repertuar');
   };
 
   window.deleteArchive = function(id) {
     archives = archives.filter(a => a.id !== id);
-    localStorage.setItem('spiewnik_archives', JSON.stringify(archives));
+    localStorage.setItem('schola_archives', JSON.stringify(archives));
     renderAll();
   };
 
@@ -598,7 +600,7 @@
       }
     }
 
-    localStorage.setItem('spiewnik_songs', JSON.stringify(songs));
+    localStorage.setItem('schola_songs', JSON.stringify(songs));
     renderAll();
     showView('view-songs');
   };
@@ -610,8 +612,8 @@
     songs = songs.filter(s => s.id !== id);
     repertuarIds = repertuarIds.filter(i => i !== id);
     
-    localStorage.setItem('spiewnik_songs', JSON.stringify(songs));
-    localStorage.setItem('spiewnik_repertuar', JSON.stringify(repertuarIds));
+    localStorage.setItem('schola_songs', JSON.stringify(songs));
+    localStorage.setItem('schola_repertuar', JSON.stringify(repertuarIds));
 
     if (db && !id.startsWith("17")) {
       try { await deleteDoc(doc(db, "songs", id)); } catch(e){console.error(e);}
@@ -632,7 +634,6 @@
     const raw = document.getElementById('form-bulk-text').value;
     if (!raw.trim()) return alert("Wklej dane do importu!");
 
-    // Dzielimy bloki po linijkach zaczynających się od cudzysłowu
     const blocks = raw.split(/(?=^")/gm);
     let count = 0;
 
@@ -645,7 +646,6 @@
       let title = "Bez tytułu";
       let category = "Uwielbienie";
       
-      // Sprawdzamy czy linia zaczyna się od cudzysłowu i wyciągamy tytuł oraz kategorię
       const titleMatch = firstLine.match(/"([^"]+)"/);
       if (titleMatch) {
         title = titleMatch[1];
@@ -655,7 +655,7 @@
           category = (catMatch[1] || catMatch[2]).trim();
         }
       } else {
-        title = firstLine; // fallback
+        title = firstLine;
       }
 
       let lyricsArr = [];
@@ -705,7 +705,7 @@
       count++;
     }
 
-    localStorage.setItem('spiewnik_songs', JSON.stringify(songs));
+    localStorage.setItem('schola_songs', JSON.stringify(songs));
     alert(`Pomyślnie zaimportowano ${count} utworów!`);
     document.getElementById('form-bulk-text').value = '';
     renderAll();
