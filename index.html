@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
@@ -47,8 +47,9 @@
     body { background-color: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; transition: background 0.3s, color 0.3s; }
     .container { width: 100%; max-width: 500px; }
 
-    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    h1 { color: var(--primary); font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .header-controls { display: flex; gap: 6px; }
+    h1 { color: var(--primary); font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
 
     .banner-container {
       width: 100%;
@@ -85,7 +86,7 @@
     .btn-filled { background-color: var(--primary); color: #ffffff; border-color: var(--primary); }
     .btn-secondary { background-color: var(--card-bg); border-color: var(--border); color: var(--text); }
     .btn-danger { border-color: var(--accent); color: var(--accent); }
-    .btn-small { width: auto; padding: 8px 14px; font-size: 0.85rem; margin-bottom: 0; border-radius: 12px; }
+    .btn-small { width: auto; padding: 6px 12px; font-size: 0.8rem; margin-bottom: 0; border-radius: 12px; }
 
     .hidden { display: none !important; }
 
@@ -149,23 +150,31 @@
 
 <div class="container">
 
+  <!-- NAGŁÓWEK Z PRZEŁĄCZNIKIEM RÓL -->
+  <div class="header-top">
+    <h1>SCHOLA DZIECIĘCA</h1>
+    <div class="header-controls">
+      <button class="btn btn-secondary btn-small" onclick="toggleAdminMode()" id="role-btn">🔑 Zaloguj</button>
+      <button class="btn btn-secondary btn-small" onclick="toggleTheme()" id="theme-btn">🌙</button>
+    </div>
+  </div>
+
   <!-- WIDOK GŁÓWNY -->
   <div id="view-home">
-    <div class="header-top">
-      <h1>SCHOLA DZIECIĘCA</h1>
-      <button class="btn btn-secondary btn-small" onclick="toggleTheme()" id="theme-btn">🌙 Ciemny</button>
-    </div>
-    
-    <!-- BANER Z CENTROWANYM CADROWANIEM -->
     <div class="banner-container">
       <img src="1787475381723.png" alt="Logo Scholi" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;">
     </div>
 
-    <button class="btn btn-filled" onclick="showView('view-repertuar')">📌 Repertuar</button>
-    <button class="btn btn-filled" onclick="showView('view-archive')">📁 Archiwum Repertuarów</button>
     <button class="btn btn-filled" onclick="showView('view-songs')">📖 Przeglądaj Śpiewnik</button>
-    <button class="btn" onclick="openAddForm()">➕ Dodaj Utwór 🔒</button>
-    <button class="btn" onclick="openBulkForm()">📥 Dodaj masowo 🔒</button>
+    <button class="btn btn-filled" onclick="showView('view-repertuar')">📌 Bieżący Repertuar</button>
+    <button class="btn btn-filled" onclick="showView('view-archive')">📁 Archiwum Repertuarów</button>
+    
+    <!-- OPCJE DLA ADMINA -->
+    <div class="admin-only hidden">
+      <div style="margin: 20px 0 10px 0; border-top: 1px dashed var(--border);"></div>
+      <button class="btn btn-secondary" onclick="openAddForm()">➕ Dodaj Utwór</button>
+      <button class="btn btn-secondary" onclick="openBulkForm()">📥 Dodaj Masowo Utwory</button>
+    </div>
   </div>
 
   <!-- WIDOK PRZEGLĄDANIA ŚPIEWNIKA -->
@@ -190,7 +199,7 @@
 
     <div id="repertuar-list"></div>
 
-    <div style="margin-top: 20px; border-top: 2px solid var(--border); padding-top: 15px;">
+    <div class="admin-only hidden" style="margin-top: 20px; border-top: 2px solid var(--border); padding-top: 15px;">
       <input type="text" id="archive-name-input" class="input-field" placeholder="Nazwa zestawu (np. Niedziela 10:00)">
       <button class="btn btn-filled" onclick="saveRepertuarToArchive()">💾 Zapisz do Archiwum</button>
     </div>
@@ -209,13 +218,12 @@
   <div id="view-single" class="hidden">
     <div class="nav-bar">
       <button class="btn btn-secondary btn-small" onclick="goBackFromSong()">⬅️ Powrót</button>
-      <button class="btn btn-secondary btn-small" onclick="editCurrentSong()">✏️ Edytuj 🔒</button>
+      <button class="btn btn-secondary btn-small admin-only hidden" onclick="editCurrentSong()">✏️ Edytuj</button>
     </div>
 
     <h2 id="view-title"></h2>
     <span id="view-category"></span>
 
-    <!-- PRZYCISK OTWIERAJĄCY NAGRANIE -->
     <div id="view-audio-container" class="hidden" style="margin-top: 15px;">
       <a id="view-audio-btn" href="#" target="_blank" class="btn btn-filled" style="background-color: #06d6a0; border-color: #06d6a0; color: #fff; margin-bottom: 0;">
         🎵 Włącz nagranie audio
@@ -296,6 +304,7 @@
   let archives = JSON.parse(localStorage.getItem('schola_archives') || '[]');
   let repertuarIds = JSON.parse(localStorage.getItem('schola_repertuar') || '[]');
 
+  let isAdmin = false;
   let activeCategory = 'Wszystkie';
   let currentSongId = null;
   let previousView = 'view-home';
@@ -305,10 +314,11 @@
   const ADMIN_PIN = "1234";
   const chromaticScale = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
+  // Motyw graficzny
   const savedTheme = localStorage.getItem('schola_theme') || 'light';
   if (savedTheme === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
-    document.getElementById('theme-btn').innerText = "☀️ Jasny";
+    document.getElementById('theme-btn').innerText = "☀️";
   }
 
   window.toggleTheme = function() {
@@ -316,17 +326,44 @@
     if (current === 'dark') {
       document.documentElement.removeAttribute('data-theme');
       localStorage.setItem('schola_theme', 'light');
-      document.getElementById('theme-btn').innerText = "🌙 Ciemny";
+      document.getElementById('theme-btn').innerText = "🌙";
     } else {
       document.documentElement.setAttribute('data-theme', 'dark');
       localStorage.setItem('schola_theme', 'dark');
-      document.getElementById('theme-btn').innerText = "☀️ Jasny";
+      document.getElementById('theme-btn').innerText = "☀️";
     }
   };
 
-  function checkAdminAccess() {
-    const pin = prompt("Wprowadź kod PIN:");
-    return pin === ADMIN_PIN;
+  // Zarządzanie rolami (Admin / Gość)
+  window.toggleAdminMode = function() {
+    if (isAdmin) {
+      isAdmin = false;
+      updateRoleUI();
+    } else {
+      const pin = prompt("Wprowadź kod PIN Admina:");
+      if (pin === ADMIN_PIN) {
+        isAdmin = true;
+        updateRoleUI();
+      } else if (pin !== null) {
+        alert("Błędny kod PIN!");
+      }
+    }
+  };
+
+  function updateRoleUI() {
+    const roleBtn = document.getElementById('role-btn');
+    const adminElements = document.querySelectorAll('.admin-only');
+
+    if (isAdmin) {
+      roleBtn.innerText = "🔒 Wyjdź";
+      roleBtn.style.borderColor = "var(--accent)";
+      adminElements.forEach(el => el.classList.remove('hidden'));
+    } else {
+      roleBtn.innerText = "🔑 Zaloguj";
+      roleBtn.style.borderColor = "var(--border)";
+      adminElements.forEach(el => el.classList.add('hidden'));
+    }
+    renderAll();
   }
 
   async function fetchFromFirebase() {
@@ -349,7 +386,7 @@
 
   window.showView = function(viewId) {
     stopAutoScroll();
-    document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden'));
+    document.querySelectorAll('.container > div:not(.header-top)').forEach(div => div.classList.add('hidden'));
     const target = document.getElementById(viewId);
     if (target) target.classList.remove('hidden');
   };
@@ -411,7 +448,7 @@
     const list = songs.filter(s => repertuarIds.includes(s.id));
 
     if (list.length === 0) {
-      container.innerHTML = '<p style="color: var(--text-sub);">Repertuar pusty.</p>';
+      container.innerHTML = '<p style="color: var(--text-sub);">Repertuar jest obecnie pusty.</p>';
       return;
     }
 
@@ -424,21 +461,23 @@
     container.innerHTML = '';
 
     if (archives.length === 0) {
-      container.innerHTML = '<p style="color: var(--text-sub);">Brak archiwów.</p>';
+      container.innerHTML = '<p style="color: var(--text-sub);">Brak zapisanych archiwów.</p>';
       return;
     }
 
     archives.forEach(arch => {
       const div = document.createElement('div');
       div.className = 'archive-item';
+      const deleteBtn = isAdmin ? `<button class="btn btn-danger btn-small" onclick="deleteArchive('${arch.id}')">🗑️</button>` : '';
+      
       div.innerHTML = `
         <div>
           <strong>${arch.name}</strong>
           <div style="font-size:0.8rem; color:var(--text-sub)">Pieśni: ${arch.songIds.length}</div>
         </div>
-        <div>
-          <button class="btn btn-secondary btn-small" onclick="loadArchive('${arch.id}')">📂</button>
-          <button class="btn btn-danger btn-small" onclick="deleteArchive('${arch.id}')">🗑️</button>
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-secondary btn-small" onclick="loadArchive('${arch.id}')">📂 Otwórz</button>
+          ${deleteBtn}
         </div>
       `;
       container.appendChild(div);
@@ -450,14 +489,18 @@
     div.className = 'song-item';
     const inRep = repertuarIds.includes(song.id);
     const audioIcon = (song.audioUrl && song.audioUrl.trim() !== '') ? ' 🎵' : '';
+    
+    const adminToggleRepBtn = isAdmin ? `
+      <button class="btn btn-secondary btn-small" onclick="toggleRepertuar('${song.id}')">
+        ${inRep ? '➖' : '➕'}
+      </button>
+    ` : '';
 
     div.innerHTML = `
       <button class="song-title-btn" onclick="openSong('${song.id}')">
         ${song.title}${audioIcon} <span class="song-category">${song.category || 'Uwielbienie'}</span>
       </button>
-      <button class="btn btn-secondary btn-small" onclick="toggleRepertuar('${song.id}')">
-        ${inRep ? '➖' : '➕'}
-      </button>
+      ${adminToggleRepBtn}
     `;
     return div;
   }
@@ -544,6 +587,7 @@
   }
 
   window.toggleRepertuar = function(id) {
+    if (!isAdmin) return;
     if (repertuarIds.includes(id)) {
       repertuarIds = repertuarIds.filter(i => i !== id);
     } else {
@@ -554,9 +598,10 @@
   };
 
   window.saveRepertuarToArchive = function() {
+    if (!isAdmin) return;
     const input = document.getElementById('archive-name-input');
     const name = input.value.trim();
-    if (!name || repertuarIds.length === 0) return alert("Wpisz nazwę zestawu!");
+    if (!name || repertuarIds.length === 0) return alert("Wpisz nazwę zestawu i upewnij się, że repertuar nie jest pusty!");
 
     archives.push({ id: Date.now().toString(), name, songIds: [...repertuarIds] });
     localStorage.setItem('schola_archives', JSON.stringify(archives));
@@ -574,6 +619,7 @@
   };
 
   window.deleteArchive = function(id) {
+    if (!isAdmin) return;
     archives = archives.filter(a => a.id !== id);
     localStorage.setItem('schola_archives', JSON.stringify(archives));
     renderAll();
@@ -587,7 +633,7 @@
   };
 
   window.openAddForm = function() {
-    if (!checkAdminAccess()) return;
+    if (!isAdmin) return;
     document.getElementById('form-header').innerText = "Dodaj Utwór";
     document.getElementById('form-id').value = "";
     document.getElementById('form-title').value = "";
@@ -600,7 +646,7 @@
   };
 
   window.editCurrentSong = function() {
-    if (!checkAdminAccess()) return;
+    if (!isAdmin) return;
     const song = songs.find(s => s.id === currentSongId);
     if (!song) return;
 
@@ -616,6 +662,7 @@
   };
 
   window.saveSong = async function() {
+    if (!isAdmin) return;
     const id = document.getElementById('form-id').value;
     const title = document.getElementById('form-title').value.trim();
     const category = document.getElementById('form-category').value.trim() || "Uwielbienie";
@@ -648,6 +695,7 @@
   };
 
   window.deleteCurrentSong = async function() {
+    if (!isAdmin) return;
     if (!confirm("Na pewno usunąć ten utwór?")) return;
     const id = document.getElementById('form-id').value;
     
@@ -666,13 +714,13 @@
   };
 
   window.openBulkForm = function() {
-    if (!checkAdminAccess()) return;
+    if (!isAdmin) return;
     document.getElementById('form-bulk-text').value = "";
     showView('view-bulk');
   };
 
   window.processBulkImport = async function() {
-    if (!checkAdminAccess()) return;
+    if (!isAdmin) return;
     const raw = document.getElementById('form-bulk-text').value;
     if (!raw.trim()) return alert("Wklej dane do importu!");
 
@@ -755,7 +803,7 @@
   };
 
   fetchFromFirebase();
-  renderAll();
+  updateRoleUI();
 </script>
 
 </body>
