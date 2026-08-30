@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Schola Dziecięca Psie Pole</title>
   
-  <!-- Ikony i konfiguracja PWA/Ekranu Głównego -->
   <link rel="icon" type="image/png" href="1787475381723.png">
   <link rel="apple-touch-icon" href="1787475381723.png">
   <link rel="manifest" href="manifest.json">
@@ -69,7 +68,7 @@
       border: 2px solid var(--border);
       background-color: var(--card-bg);
       color: var(--text);
-      border-radius: 16px;
+      border-radius: 166px;
       font-size: 1.05rem;
       font-weight: 700;
       cursor: pointer;
@@ -137,13 +136,7 @@
     }
     .cat-chip.active { background: var(--primary); color: #ffffff; border-color: var(--primary); }
 
-    .song-lyrics { 
-      white-space: pre; 
-      font-size: 1.15rem; 
-      line-height: 1.5; 
-      margin-top: 15px; 
-      overflow-x: auto;
-    }
+    .song-lyrics { white-space: pre-wrap; font-size: 1.15rem; line-height: 1.6; margin-top: 15px; }
     .song-chords {
       white-space: pre-wrap; font-family: monospace; font-size: 1.1rem;
       color: var(--primary); background: var(--chords-bg); padding: 12px;
@@ -156,7 +149,7 @@
 
 <div class="container">
 
-  <!-- NAGŁÓWEK Z PRZEŁĄCZNIKIEM RÓL -->
+  <!-- NAGŁÓWEK -->
   <div class="header-top">
     <h1>SCHOLA DZIECIĘCA</h1>
     <div class="header-controls">
@@ -165,7 +158,7 @@
     </div>
   </div>
 
-  <!-- WIDOK GŁÓWNY -->
+  <!-- EKRAN GŁÓWNY -->
   <div id="view-home">
     <div class="banner-container">
       <img src="1787475381723.png" alt="Logo Scholi" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;">
@@ -175,73 +168,71 @@
     <button class="btn btn-filled" onclick="showView('view-repertuar')">📌 Bieżący Repertuar</button>
     <button class="btn btn-filled" onclick="showView('view-archive')">📁 Archiwum Repertuarów</button>
     
-    <!-- OPCJE DLA ADMINA -->
     <div class="admin-only hidden">
       <div style="margin: 20px 0 10px 0; border-top: 1px dashed var(--border);"></div>
       <button class="btn btn-secondary" onclick="openAddForm()">➕ Dodaj Utwór</button>
-      <button class="btn btn-secondary" onclick="openBulkForm()">📥 Dodaj Masowo Utwory</button>
+      <button class="btn btn-secondary" onclick="openBulkForm()">📥 Dodaj masowo utwory</button>
     </div>
   </div>
 
-  <!-- WIDOK PRZEGLĄDANIA ŚPIEWNIKA -->
+  <!-- WIDOK: ŚPIEWNIK -->
   <div id="view-songs" class="hidden">
     <div class="nav-bar">
-      <button class="btn btn-secondary btn-small" onclick="showView('view-home')">⬅️ Powrót</button>
+      <button class="btn btn-secondary btn-small" onclick="showView('view-home')">⬅️ Wróć</button>
       <h2>Śpiewnik</h2>
+      <div></div>
     </div>
-
-    <input type="text" id="search-input" class="input-field" placeholder="🔎 Szukaj po tytule..." oninput="filterSongs()">
-
+    <input type="text" id="search-input" class="input-field" placeholder="🔎 Szukaj pieśni..." onkeyup="filterSongs()">
     <div class="cat-bar" id="categories-bar"></div>
     <div id="all-songs-list"></div>
   </div>
 
-  <!-- WIDOK REPERTUARU -->
+  <!-- WIDOK: REPERTUAR -->
   <div id="view-repertuar" class="hidden">
     <div class="nav-bar">
-      <button class="btn btn-secondary btn-small" onclick="showView('view-home')">⬅️ Powrót</button>
+      <button class="btn btn-secondary btn-small" onclick="showView('view-home')">⬅️ Wróć</button>
       <h2>Bieżący Repertuar</h2>
+      <div></div>
+    </div>
+    
+    <div class="admin-only hidden" style="margin-bottom: 15px;">
+      <input type="text" id="archive-name-input" class="input-field" placeholder="Nazwa zestawu (np. Niedziela 15.10)">
+      <button class="btn btn-filled btn-small" style="width: 100%;" onclick="saveRepertuarToArchive()">💾 Zapisz do Archiwum</button>
     </div>
 
     <div id="repertuar-list"></div>
-
-    <div class="admin-only hidden" style="margin-top: 20px; border-top: 2px solid var(--border); padding-top: 15px;">
-      <input type="text" id="archive-name-input" class="input-field" placeholder="Nazwa zestawu (np. Niedziela 10:00)">
-      <button class="btn btn-filled" onclick="saveRepertuarToArchive()">💾 Zapisz do Archiwum</button>
-    </div>
   </div>
 
-  <!-- WIDOK ARCHIWUM -->
+  <!-- WIDOK: ARCHIWUM -->
   <div id="view-archive" class="hidden">
     <div class="nav-bar">
-      <button class="btn btn-secondary btn-small" onclick="showView('view-home')">⬅️ Powrót</button>
+      <button class="btn btn-secondary btn-small" onclick="showView('view-home')">⬅️ Wróć</button>
       <h2>Archiwum</h2>
+      <div></div>
     </div>
     <div id="archive-list"></div>
   </div>
 
-  <!-- WIDOK JEDNEGO UTWORU -->
+  <!-- WIDOK: POJEDYNCZA PIEŚŃ -->
   <div id="view-single" class="hidden">
     <div class="nav-bar">
-      <button class="btn btn-secondary btn-small" onclick="goBackFromSong()">⬅️ Powrót</button>
+      <button class="btn btn-secondary btn-small" onclick="goBackFromSong()">⬅️ Wróć</button>
+      <span id="view-category" class="song-category"></span>
       <button class="btn btn-secondary btn-small admin-only hidden" onclick="editCurrentSong()">✏️ Edytuj</button>
     </div>
 
-    <h2 id="view-title"></h2>
-    <span id="view-category"></span>
-
-    <div id="view-audio-container" class="hidden" style="margin-top: 15px;">
-      <a id="view-audio-btn" href="#" target="_blank" class="btn btn-filled" style="background-color: #06d6a0; border-color: #06d6a0; color: #fff; margin-bottom: 0;">
-        🎵 Włącz nagranie audio
-      </a>
+    <h2 id="view-title" style="margin-top: 10px; color: var(--primary);"></h2>
+    
+    <div id="view-audio-container" class="hidden" style="margin-top: 10px;">
+      <a id="view-audio-btn" href="#" target="_blank" class="btn btn-secondary btn-small" style="display: inline-flex; width: auto;">🎧 Posłuchaj nagrania</a>
     </div>
 
     <div class="controls-panel">
       <button class="btn btn-secondary btn-small" onclick="toggleChords()">🎸 Akordy</button>
-      <button class="btn btn-secondary btn-small" onclick="changeFontSize(2)">A+</button>
-      <button class="btn btn-secondary btn-small" onclick="changeFontSize(-2)">A-</button>
-      <button class="btn btn-secondary btn-small" onclick="transpose(1)">♭/♯ +1</button>
-      <button class="btn btn-secondary btn-small" onclick="transpose(-1)">♭/♯ -1</button>
+      <button class="btn btn-secondary btn-small" onclick="transpose(1)">🎸 Ton +1</button>
+      <button class="btn btn-secondary btn-small" onclick="transpose(-1)">🎸 Ton -1</button>
+      <button class="btn btn-secondary btn-small" onclick="changeFontSize(2)">🔍 A+</button>
+      <button class="btn btn-secondary btn-small" onclick="changeFontSize(-2)">🔍 A-</button>
       <button class="btn btn-secondary btn-small" id="btn-scroll" onclick="toggleAutoScroll()">📜 Auto Scroll</button>
     </div>
 
@@ -249,53 +240,58 @@
     <div id="view-lyrics" class="song-lyrics"></div>
   </div>
 
-  <!-- WIDOK DODAWANIA / EDYCJI POJEDYNCZEGO -->
+  <!-- WIDOK: FORMULARZ DODAWANIA / EDYCJI -->
   <div id="view-form" class="hidden">
     <div class="nav-bar">
-      <button class="btn btn-secondary btn-small" onclick="showView('view-home')">⬅️ Anuluj</button>
+      <button class="btn btn-secondary btn-small" onclick="showView('view-songs')">Anuluj</button>
       <h2 id="form-header">Dodaj Utwór</h2>
+      <div></div>
     </div>
 
     <input type="hidden" id="form-id">
-    <input type="text" id="form-title" class="input-field" placeholder="Tytuł utworu *">
+    <input type="text" id="form-title" class="input-field" placeholder="Tytuł utworu">
     <input type="text" id="form-category" class="input-field" placeholder="Kategoria (np. Uwielbienie, Kolędy)">
-    <input type="text" id="form-audio-url" class="input-field" placeholder="Link do nagrania (Vocaroo / MP3)">
-    <textarea id="form-lyrics" class="input-field" placeholder="Tekst pieśni *"></textarea>
-    <textarea id="form-chords" class="input-field" placeholder="Akordy (opcjonalnie)"></textarea>
+    <input type="text" id="form-audio-url" class="input-field" placeholder="Link do nagrania (YouTube / Drive / MP3)">
+    <textarea id="form-lyrics" class="input-field" placeholder="Tekst pieśni..."></textarea>
+    <textarea id="form-chords" class="input-field" placeholder="Akordy (opcjonalnie)..."></textarea>
 
-    <button class="btn btn-filled" onclick="saveSong()">💾 Zapisz</button>
-    <button class="btn btn-danger hidden" id="btn-delete" onclick="deleteCurrentSong()">🗑️ Usuń Utwór</button>
+    <button class="btn btn-filled" onclick="saveSong()">💾 Zapisz w chmurze</button>
+    <button id="btn-delete" class="btn btn-danger hidden" onclick="deleteCurrentSong()">🗑️ Usuń utwór</button>
   </div>
 
-  <!-- WIDOK DODAWANIA MASOWEGO -->
+  <!-- WIDOK: MASOWE DODAWANIE -->
   <div id="view-bulk" class="hidden">
     <div class="nav-bar">
-      <button class="btn btn-secondary btn-small" onclick="showView('view-home')">⬅️ Anuluj</button>
-      <h2>Masowe dodawanie</h2>
+      <button class="btn btn-secondary btn-small" onclick="showView('view-home')">Anuluj</button>
+      <h2>Import Masowy</h2>
+      <div></div>
     </div>
-
     <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 10px;">
-      Format (tytuł zaczyna się od cudzysłowu):<br>
-      <code style="color: var(--primary);">"Nazwa Pieśni" [Kategoria]</code><br>
-      <code style="color: var(--primary);"># Tekst</code><br>
-      <code style="color: var(--primary);">Linijka tekstu...</code><br>
-      <code style="color: var(--primary);"># Akordy</code><br>
-      <code style="color: var(--primary);">G D e C</code>
+      Format:<br>
+      "Tytuł Pieśni" [Kategoria]<br>
+      # Tekst<br>Linia tekstu...<br>
+      # Akordy<br>Linia akordów...<br>
+      URL: https://...
     </p>
-
-    <textarea id="form-bulk-text" class="input-field" placeholder="&quot;Nazwa Pieśni&quot; [Uwielbienie]&#10;# Tekst&#10;Tekst pieśni...&#10;&#10;# Akordy&#10;G D e C"></textarea>
-
-    <button class="btn btn-filled" onclick="processBulkImport()">📥 Importuj wszystko</button>
+    <textarea id="form-bulk-text" class="input-field" placeholder='Wklej dane tutaj...'></textarea>
+    <button class="btn btn-filled" onclick="processBulkImport()">🚀 Zaimportuj wszystkie do chmury</button>
   </div>
 
 </div>
 
+<!-- LOGIKA APLIKACJI I FIREBASE -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
   const firebaseConfig = {
-    projectId: "schola-dziecieca-psie-pole"
+    apiKey: "AIzaSyBXxeXd2K2HGzK8NmPUtlhqttRVYdbDSkE",
+    authDomain: "schola-dziecieca-psie-pole.firebaseapp.com",
+    projectId: "schola-dziecieca-psie-pole",
+    storageBucket: "schola-dziecieca-psie-pole.firebasestorage.app",
+    messagingSenderId: "717275104040",
+    appId: "1:717275104040:web:98869a28471b1ce01f461d",
+    measurementId: "G-DWZK2270GF"
   };
 
   let db = null;
@@ -303,10 +299,10 @@
     const app = initializeApp(firebaseConfig);
     db = getFirestore(app);
   } catch (e) {
-    console.warn("Błąd inicjalizacji Firebase:", e);
+    console.error("Błąd połączenia z Firebase:", e);
   }
 
-  let songs = JSON.parse(localStorage.getItem('schola_songs') || '[]');
+  let songs = [];
   let archives = JSON.parse(localStorage.getItem('schola_archives') || '[]');
   let repertuarIds = JSON.parse(localStorage.getItem('schola_repertuar') || '[]');
 
@@ -320,7 +316,6 @@
   const ADMIN_PIN = "1234";
   const chromaticScale = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
-  // Obsługa instalacji PWA z parametrem ?install=true
   let deferredPrompt;
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -354,12 +349,11 @@
         deferredPrompt = null;
         banner.remove();
       } else {
-        alert("Aby zainstalować aplikację na systemie iOS (Safari), kliknij przycisk 'Udostępnij' i wybierz 'Do ekranu początkowego'.");
+        alert("Aby zainstalować aplikację na iOS (Safari), kliknij przycisk 'Udostępnij' i wybierz 'Do ekranu początkowego'.");
       }
     });
   }
 
-  // Motyw graficzny
   const savedTheme = localStorage.getItem('schola_theme') || 'light';
   if (savedTheme === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
@@ -414,17 +408,17 @@
     if (!db) return;
     try {
       const querySnapshot = await getDocs(collection(db, "songs"));
-      if (!querySnapshot.empty) {
-        const fetched = [];
-        querySnapshot.forEach((docSnap) => {
-          fetched.push({ id: docSnap.id, ...docSnap.data() });
-        });
-        songs = fetched;
-        localStorage.setItem('schola_songs', JSON.stringify(songs));
-        renderAll();
-      }
+      const fetched = [];
+      querySnapshot.forEach((docSnap) => {
+        fetched.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      songs = fetched;
+      localStorage.setItem('schola_songs', JSON.stringify(songs));
+      renderAll();
     } catch (e) {
-      console.log("Błąd pobierania z Firebase:", e);
+      console.error("Błąd pobierania z Firebase:", e);
+      songs = JSON.parse(localStorage.getItem('schola_songs') || '[]');
+      renderAll();
     }
   }
 
@@ -549,46 +543,6 @@
     return div;
   }
 
-  window.autoFitFontSize = function() {
-    const el = document.getElementById('view-lyrics');
-    if (!el || !el.innerText.trim()) return;
-
-    const containerWidth = el.clientWidth;
-    if (containerWidth === 0) return;
-
-    const lines = el.innerText.split('\n');
-    let longestLine = '';
-    lines.forEach(line => {
-      if (line.length > longestLine.length) {
-        longestLine = line;
-      }
-    });
-
-    if (!longestLine) return;
-
-    const measurer = document.createElement('span');
-    measurer.style.visibility = 'hidden';
-    measurer.style.whiteSpace = 'pre';
-    measurer.style.fontFamily = window.getComputedStyle(el).fontFamily;
-    measurer.style.fontWeight = window.getComputedStyle(el).fontWeight;
-    measurer.innerText = longestLine;
-    document.body.appendChild(measurer);
-
-    let fontSize = 28; 
-    const minFontSize = 10; 
-
-    while (fontSize > minFontSize) {
-      measurer.style.fontSize = fontSize + 'px';
-      if (measurer.getBoundingClientRect().width <= containerWidth) {
-        break;
-      }
-      fontSize -= 0.5;
-    }
-
-    document.body.removeChild(measurer);
-    el.style.fontSize = fontSize + 'px';
-  };
-
   window.openSong = function(id) {
     const song = songs.find(s => s.id === id);
     if (!song) return;
@@ -619,17 +573,7 @@
     }
 
     showView('view-single');
-
-    setTimeout(() => {
-      window.autoFitFontSize();
-    }, 50);
   };
-
-  window.addEventListener('resize', () => {
-    if (!document.getElementById('view-single').classList.contains('hidden')) {
-      window.autoFitFontSize();
-    }
-  });
 
   window.goBackFromSong = function() {
     showView(previousView);
@@ -768,43 +712,45 @@
 
     const songData = { title, category, audioUrl, lyrics, chords };
 
-    if (id) {
-      const idx = songs.findIndex(s => s.id === id);
-      if (idx !== -1) songs[idx] = { ...songs[idx], ...songData };
-      if (db && !id.startsWith("17")) {
-        try { await updateDoc(doc(db, "songs", id), songData); } catch(e){console.error(e);}
+    try {
+      if (id) {
+        if (db) await updateDoc(doc(db, "songs", id), songData);
+        const idx = songs.findIndex(s => s.id === id);
+        if (idx !== -1) songs[idx] = { id, ...songData };
+      } else {
+        if (db) {
+          const docRef = await addDoc(collection(db, "songs"), songData);
+          songs.push({ id: docRef.id, ...songData });
+        }
       }
-    } else {
-      const newId = Date.now().toString();
-      const newSong = { id: newId, ...songData };
-      songs.push(newSong);
-      if (db) {
-        try { await addDoc(collection(db, "songs"), songData); } catch(e){console.error(e);}
-      }
+      localStorage.setItem('schola_songs', JSON.stringify(songs));
+      renderAll();
+      showView('view-songs');
+    } catch (e) {
+      console.error("Błąd zapisu do chmury:", e);
+      alert("Błąd zapisu w chmurze! Sprawdź reguły Firebase Firestore.");
     }
-
-    localStorage.setItem('schola_songs', JSON.stringify(songs));
-    renderAll();
-    showView('view-songs');
   };
 
   window.deleteCurrentSong = async function() {
     if (!isAdmin) return;
-    if (!confirm("Na pewno usunąć ten utwór?")) return;
+    if (!confirm("Na pewno usunąć ten utwór z chmury?")) return;
     const id = document.getElementById('form-id').value;
     
-    songs = songs.filter(s => s.id !== id);
-    repertuarIds = repertuarIds.filter(i => i !== id);
-    
-    localStorage.setItem('schola_songs', JSON.stringify(songs));
-    localStorage.setItem('schola_repertuar', JSON.stringify(repertuarIds));
+    try {
+      if (db) await deleteDoc(doc(db, "songs", id));
+      songs = songs.filter(s => s.id !== id);
+      repertuarIds = repertuarIds.filter(i => i !== id);
+      
+      localStorage.setItem('schola_songs', JSON.stringify(songs));
+      localStorage.setItem('schola_repertuar', JSON.stringify(repertuarIds));
 
-    if (db && !id.startsWith("17")) {
-      try { await deleteDoc(doc(db, "songs", id)); } catch(e){console.error(e);}
+      renderAll();
+      showView('view-songs');
+    } catch (e) {
+      console.error("Błąd usuwania z chmury:", e);
+      alert("Nie udało się usunąć utworu z chmury.");
     }
-
-    renderAll();
-    showView('view-songs');
   };
 
   window.openBulkForm = function() {
@@ -835,9 +781,7 @@
         title = titleMatch[1];
         let remainder = firstLine.replace(titleMatch[0], '').trim();
         const catMatch = remainder.match(/\[(.*?)\]|\((.*?)\)/);
-        if (catMatch) {
-          category = (catMatch[1] || catMatch[2]).trim();
-        }
+        if (catMatch) category = (catMatch[1] || catMatch[2]).trim();
       } else {
         title = firstLine;
       }
@@ -862,11 +806,8 @@
           continue;
         }
 
-        if (currentMode === "chords") {
-          chordsArr.push(line);
-        } else {
-          lyricsArr.push(line);
-        }
+        if (currentMode === "chords") chordsArr.push(line);
+        else lyricsArr.push(line);
       }
 
       const newSongData = {
@@ -879,18 +820,18 @@
 
       if (db) {
         try {
-          await addDoc(collection(db, "songs"), newSongData);
+          const docRef = await addDoc(collection(db, "songs"), newSongData);
+          songs.push({ id: docRef.id, ...newSongData });
+          count++;
         } catch (e) {
-          console.error(e);
+          console.error("Błąd importu:", e);
         }
       }
-
-      songs.push({ id: Date.now().toString() + Math.random(), ...newSongData });
-      count++;
     }
 
     localStorage.setItem('schola_songs', JSON.stringify(songs));
-    alert(`Zaimportowano ${count} utworów!`);
+    alert(`Zaimportowano ${count} utworów do chmury!`);
+    renderAll();
     showView('view-songs');
   };
 
