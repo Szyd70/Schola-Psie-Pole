@@ -197,7 +197,7 @@
     
     <div class="admin-only hidden" style="margin-bottom: 15px;">
       <input type="text" id="archive-name-input" class="input-field" placeholder="Nazwa zestawu (np. Niedziela 15.10)">
-      <button class="btn btn-filled btn-small" style="width: 100%;" onclick="saveRepertuarToArchive()">💾 Zapisz do Archiwum</button>
+      <button class="btn btn-filled btn-small" style="width: 100%;" onclick="saveRepertuarToArchive()">💾 Zapisz do Archiwum w Chmurze</button>
     </div>
 
     <div id="repertuar-list"></div>
@@ -282,7 +282,7 @@
 <!-- LOGIKA APLIKACJI I FIREBASE -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBXxeXd2K2HGzK8NmPUtlhqttRVYdbDSkE",
@@ -303,8 +303,8 @@
   }
 
   let songs = [];
-  let archives = JSON.parse(localStorage.getItem('schola_archives') || '[]');
-  let repertuarIds = JSON.parse(localStorage.getItem('schola_repertuar') || '[]');
+  let archives = [];
+  let repertuarIds = [];
 
   let isAdmin = false;
   let activeCategory = 'Wszystkie';
@@ -312,15 +312,19 @@
   let previousView = 'view-home';
   let scrollInterval = null;
   let isScrolling = false;
+  let currentTransposeSteps = 0;
+  let originalChords = "";
 
   const ADMIN_PIN = "1234";
-  const chromaticScale = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
+  // Skala w notacji polskiej / niemieckiej (H zamiast B, B zamiast Bb)
+  const chromaticScalePL = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "B", "H"];
+
+  // Rejestracja PWA
   let deferredPrompt;
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('install')) {
       showInstallBanner();
@@ -354,6 +358,7 @@
     });
   }
 
+  // Motyw
   const savedTheme = localStorage.getItem('schola_theme') || 'light';
   if (savedTheme === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
@@ -404,22 +409,40 @@
     renderAll();
   }
 
-  async function fetchFromFirebase() {
+  // Synch z Firebase (Songbook & Repertuar & Archiwum)
+  function initFirebaseSync() {
     if (!db) return;
-    try {
-      const querySnapshot = await getDocs(collection(db, "songs"));
+
+    // Pobieranie pieśni
+    onSnapshot(collection(db, "songs"), (snapshot) => {
       const fetched = [];
-      querySnapshot.forEach((docSnap) => {
+      snapshot.forEach((docSnap) => {
         fetched.push({ id: docSnap.id, ...docSnap.data() });
       });
       songs = fetched;
-      localStorage.setItem('schola_songs', JSON.stringify(songs));
       renderAll();
-    } catch (e) {
-      console.error("Błąd pobierania z Firebase:", e);
-      songs = JSON.parse(localStorage.getItem('schola_songs') || '[]');
-      renderAll();
-    }
+    });
+
+    // Pobieranie bieżącego repertuaru w chmurze
+    onSnapshot(doc(db, "repertuar", "current"), (docSnap) => {
+      if (docSnap.exists()) {
+        repertuarIds = docSnap.data().songIds || [];
+      } else {
+        repertuarIds = [];
+      }
+      renderRepertuar();
+      renderSongsList();
+    });
+
+    // Pobieranie archiwów z chmury
+    onSnapshot(collection(db, "archives"), (snapshot) => {
+      const fetchedArch = [];
+      snapshot.forEach((docSnap) => {
+        fetchedArch.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      archives = fetchedArch;
+      renderArchives();
+    });
   }
 
   window.showView = function(viewId) {
@@ -511,7 +534,7 @@
       div.innerHTML = `
         <div>
           <strong>${arch.name}</strong>
-          <div style="font-size:0.8rem; color:var(--text-sub)">Pieśni: ${arch.songIds.length}</div>
+          <div style="font-size:0.8rem; color:var(--text-sub)">Pieśni: ${(arch.songIds || []).length}</div>
         </div>
         <div style="display:flex; gap:6px;">
           <button class="btn btn-secondary btn-small" onclick="loadArchive('${arch.id}')">📂 Otwórz</button>
@@ -548,7 +571,9 @@
     if (!song) return;
 
     currentSongId = id;
-    
+    currentTransposeSteps = 0;
+    originalChords = song.chords || '';
+
     if (!document.getElementById('view-songs').classList.contains('hidden')) previousView = 'view-songs';
     else if (!document.getElementById('view-repertuar').classList.contains('hidden')) previousView = 'view-repertuar';
     else previousView = 'view-home';
@@ -557,9 +582,7 @@
     document.getElementById('view-category').innerText = song.category || 'Uwielbienie';
     document.getElementById('view-lyrics').innerText = song.lyrics || '';
     
-    const chordsEl = document.getElementById('view-chords');
-    chordsEl.innerText = song.chords || 'Brak akordów.';
-    chordsEl.style.display = 'none';
+    renderChordsView();
 
     const audioContainer = document.getElementById('view-audio-container');
     const audioBtn = document.getElementById('view-audio-btn');
@@ -574,6 +597,45 @@
 
     showView('view-single');
   };
+
+  function renderChordsView() {
+    const chordsEl = document.getElementById('view-chords');
+    if (!originalChords || originalChords.trim() === '') {
+      chordsEl.innerText = 'Brak akordów.';
+      return;
+    }
+
+    const transposed = transposeChordsPL(originalChords, currentTransposeSteps);
+    let capoHeader = "";
+    
+    if (currentTransposeSteps !== 0) {
+      const capoFret = (12 - currentTransposeSteps) % 12;
+      capoHeader = `🎸 Kapodaster: próg ${capoFret} (lub gra bez kapo w nowej tonacji)\n\n`;
+    } else {
+      capoHeader = `🎸 Tonacja oryginalna (bez kapodastra)\n\n`;
+    }
+
+    chordsEl.innerText = capoHeader + transposed;
+  }
+
+  // Transpozycja z uwzględnieniem polskiej notacji H / B
+  function transposeChordsPL(chordsText, steps) {
+    if (steps === 0) return chordsText;
+
+    // RegEx dopasowujący akordy w notacji polskiej: H, B, C, C#, D...
+    return chordsText.replace(/\b([A-H][#b]?)(m|maj7|7|sus4|add9|dim)?\b/g, (match, root, suffix) => {
+      let normalizedRoot = root;
+      if (normalizedRoot === 'B' && !match.includes('Bm')) normalizedRoot = 'B'; 
+
+      let idx = chromaticScalePL.indexOf(normalizedRoot);
+      if (idx === -1) return match;
+
+      let newIdx = (idx + steps) % 12;
+      if (newIdx < 0) newIdx += 12;
+
+      return chromaticScalePL[newIdx] + (suffix || '');
+    });
+  }
 
   window.goBackFromSong = function() {
     showView(previousView);
@@ -591,16 +653,10 @@
   };
 
   window.transpose = function(steps) {
-    const el = document.getElementById('view-chords');
-    if (!el.innerText || el.innerText === 'Brak akordów.') return;
-    
-    el.innerText = el.innerText.replace(/[A-G][#b]?/g, (match) => {
-      let idx = chromaticScale.indexOf(match);
-      if (idx === -1) return match;
-      let newIdx = (idx + steps) % 12;
-      if (newIdx < 0) newIdx += 12;
-      return chromaticScale[newIdx];
-    });
+    if (!originalChords) return;
+    currentTransposeSteps = (currentTransposeSteps + steps) % 12;
+    if (currentTransposeSteps < 0) currentTransposeSteps += 12;
+    renderChordsView();
   };
 
   window.toggleAutoScroll = function() {
@@ -624,43 +680,67 @@
     if (btn) btn.innerText = "📜 Auto Scroll";
   }
 
-  window.toggleRepertuar = function(id) {
+  // Zapisywanie repertuaru w Firebase
+  window.toggleRepertuar = async function(id) {
     if (!isAdmin) return;
     if (repertuarIds.includes(id)) {
       repertuarIds = repertuarIds.filter(i => i !== id);
     } else {
       repertuarIds.push(id);
     }
-    localStorage.setItem('schola_repertuar', JSON.stringify(repertuarIds));
-    renderAll();
+    
+    if (db) {
+      try {
+        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds });
+      } catch (e) {
+        console.error("Błąd zapisu repertuaru:", e);
+      }
+    }
   };
 
-  window.saveRepertuarToArchive = function() {
+  // Zapisywanie archiwum w Firebase
+  window.saveRepertuarToArchive = async function() {
     if (!isAdmin) return;
     const input = document.getElementById('archive-name-input');
     const name = input.value.trim();
     if (!name || repertuarIds.length === 0) return alert("Wpisz nazwę zestawu i upewnij się, że repertuar nie jest pusty!");
 
-    archives.push({ id: Date.now().toString(), name, songIds: [...repertuarIds] });
-    localStorage.setItem('schola_archives', JSON.stringify(archives));
-    input.value = '';
-    renderAll();
+    if (db) {
+      try {
+        await addDoc(collection(db, "archives"), { name, songIds: [...repertuarIds], createdAt: new Date() });
+        input.value = '';
+        alert("Zapisano zestaw w chmurze!");
+      } catch (e) {
+        console.error("Błąd zapisu archiwum:", e);
+      }
+    }
   };
 
-  window.loadArchive = function(id) {
+  window.loadArchive = async function(id) {
     const arch = archives.find(a => a.id === id);
     if (!arch) return;
-    repertuarIds = [...arch.songIds];
-    localStorage.setItem('schola_repertuar', JSON.stringify(repertuarIds));
-    renderAll();
+    repertuarIds = [...(arch.songIds || [])];
+
+    if (db && isAdmin) {
+      try {
+        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds });
+      } catch (e) {
+        console.error("Błąd ładownaia archiwum:", e);
+      }
+    }
     showView('view-repertuar');
   };
 
-  window.deleteArchive = function(id) {
+  window.deleteArchive = async function(id) {
     if (!isAdmin) return;
-    archives = archives.filter(a => a.id !== id);
-    localStorage.setItem('schola_archives', JSON.stringify(archives));
-    renderAll();
+    if (!confirm("Usunąć to archiwum z chmury?")) return;
+    if (db) {
+      try {
+        await deleteDoc(doc(db, "archives", id));
+      } catch (e) {
+        console.error("Błąd usuwania archiwum:", e);
+      }
+    }
   };
 
   window.filterSongs = function() {
@@ -715,16 +795,9 @@
     try {
       if (id) {
         if (db) await updateDoc(doc(db, "songs", id), songData);
-        const idx = songs.findIndex(s => s.id === id);
-        if (idx !== -1) songs[idx] = { id, ...songData };
       } else {
-        if (db) {
-          const docRef = await addDoc(collection(db, "songs"), songData);
-          songs.push({ id: docRef.id, ...songData });
-        }
+        if (db) await addDoc(collection(db, "songs"), songData);
       }
-      localStorage.setItem('schola_songs', JSON.stringify(songs));
-      renderAll();
       showView('view-songs');
     } catch (e) {
       console.error("Błąd zapisu do chmury:", e);
@@ -739,13 +812,6 @@
     
     try {
       if (db) await deleteDoc(doc(db, "songs", id));
-      songs = songs.filter(s => s.id !== id);
-      repertuarIds = repertuarIds.filter(i => i !== id);
-      
-      localStorage.setItem('schola_songs', JSON.stringify(songs));
-      localStorage.setItem('schola_repertuar', JSON.stringify(repertuarIds));
-
-      renderAll();
       showView('view-songs');
     } catch (e) {
       console.error("Błąd usuwania z chmury:", e);
@@ -820,8 +886,7 @@
 
       if (db) {
         try {
-          const docRef = await addDoc(collection(db, "songs"), newSongData);
-          songs.push({ id: docRef.id, ...newSongData });
+          await addDoc(collection(db, "songs"), newSongData);
           count++;
         } catch (e) {
           console.error("Błąd importu:", e);
@@ -829,13 +894,11 @@
       }
     }
 
-    localStorage.setItem('schola_songs', JSON.stringify(songs));
     alert(`Zaimportowano ${count} utworów do chmury!`);
-    renderAll();
     showView('view-songs');
   };
 
-  fetchFromFirebase();
+  initFirebaseSync();
   updateRoleUI();
 </script>
 
