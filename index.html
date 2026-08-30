@@ -142,6 +142,16 @@
       color: var(--primary); background: var(--chords-bg); padding: 12px;
       border-radius: 12px; margin-top: 10px; display: none; font-weight: bold;
     }
+    .capo-badge {
+      display: inline-block;
+      background: var(--accent-yellow);
+      color: #000;
+      font-weight: bold;
+      font-size: 0.85rem;
+      padding: 4px 10px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
     .controls-panel { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
   </style>
 </head>
@@ -317,8 +327,9 @@
 
   const ADMIN_PIN = "1234";
 
-  // Skala w notacji polskiej / niemieckiej (H zamiast B, B zamiast Bb)
-  const chromaticScalePL = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "B", "H"];
+  // Dwa zestawy skal (duże i małe litery)
+  const scaleMajor = ["C", "Cis", "D", "Dis", "E", "F", "Fis", "G", "Gis", "A", "B", "H"];
+  const scaleMinor = ["c", "cis", "d", "dis", "e", "f", "fis", "g", "gis", "a", "b", "h"];
 
   // Rejestracja PWA
   let deferredPrompt;
@@ -413,7 +424,6 @@
   function initFirebaseSync() {
     if (!db) return;
 
-    // Pobieranie pieśni
     onSnapshot(collection(db, "songs"), (snapshot) => {
       const fetched = [];
       snapshot.forEach((docSnap) => {
@@ -423,7 +433,6 @@
       renderAll();
     });
 
-    // Pobieranie bieżącego repertuaru w chmurze
     onSnapshot(doc(db, "repertuar", "current"), (docSnap) => {
       if (docSnap.exists()) {
         repertuarIds = docSnap.data().songIds || [];
@@ -434,7 +443,6 @@
       renderSongsList();
     });
 
-    // Pobieranie archiwów z chmury
     onSnapshot(collection(db, "archives"), (snapshot) => {
       const fetchedArch = [];
       snapshot.forEach((docSnap) => {
@@ -601,39 +609,43 @@
   function renderChordsView() {
     const chordsEl = document.getElementById('view-chords');
     if (!originalChords || originalChords.trim() === '') {
-      chordsEl.innerText = 'Brak akordów.';
+      chordsEl.innerHTML = 'Brak akordów.';
       return;
     }
 
     const transposed = transposeChordsPL(originalChords, currentTransposeSteps);
-    let capoHeader = "";
+    let capoBadge = "";
     
     if (currentTransposeSteps !== 0) {
       const capoFret = (12 - currentTransposeSteps) % 12;
-      capoHeader = `🎸 Kapodaster: próg ${capoFret} (lub gra bez kapo w nowej tonacji)\n\n`;
-    } else {
-      capoHeader = `🎸 Tonacja oryginalna (bez kapodastra)\n\n`;
+      capoBadge = `<div class="capo-badge">🎸 capo ${capoFret}</div><br>`;
     }
 
-    chordsEl.innerText = capoHeader + transposed;
+    chordsEl.innerHTML = capoBadge + transposed;
   }
 
-  // Transpozycja z uwzględnieniem polskiej notacji H / B
+  // Transpozycja z obsługą dużej i małej notacji polsko-niemieckiej (C/c, Cis/cis, B/b, H/h)
   function transposeChordsPL(chordsText, steps) {
     if (steps === 0) return chordsText;
 
-    // RegEx dopasowujący akordy w notacji polskiej: H, B, C, C#, D...
-    return chordsText.replace(/\b([A-H][#b]?)(m|maj7|7|sus4|add9|dim)?\b/g, (match, root, suffix) => {
-      let normalizedRoot = root;
-      if (normalizedRoot === 'B' && !match.includes('Bm')) normalizedRoot = 'B'; 
+    return chordsText.replace(/\b([A-Ga-g][is]*|[BHbh])(maj7|7|sus4|add9|dim)?\b/g, (match, root, suffix) => {
+      // Szukanie w tonacji dużej
+      let idxMajor = scaleMajor.indexOf(root);
+      if (idxMajor !== -1) {
+        let newIdx = (idxMajor + steps) % 12;
+        if (newIdx < 0) newIdx += 12;
+        return scaleMajor[newIdx] + (suffix || '');
+      }
 
-      let idx = chromaticScalePL.indexOf(normalizedRoot);
-      if (idx === -1) return match;
+      // Szukanie w tonacji małej
+      let idxMinor = scaleMinor.indexOf(root);
+      if (idxMinor !== -1) {
+        let newIdx = (idxMinor + steps) % 12;
+        if (newIdx < 0) newIdx += 12;
+        return scaleMinor[newIdx] + (suffix || '');
+      }
 
-      let newIdx = (idx + steps) % 12;
-      if (newIdx < 0) newIdx += 12;
-
-      return chromaticScalePL[newIdx] + (suffix || '');
+      return match;
     });
   }
 
@@ -680,7 +692,6 @@
     if (btn) btn.innerText = "📜 Auto Scroll";
   }
 
-  // Zapisywanie repertuaru w Firebase
   window.toggleRepertuar = async function(id) {
     if (!isAdmin) return;
     if (repertuarIds.includes(id)) {
@@ -698,7 +709,6 @@
     }
   };
 
-  // Zapisywanie archiwum w Firebase
   window.saveRepertuarToArchive = async function() {
     if (!isAdmin) return;
     const input = document.getElementById('archive-name-input');
@@ -725,7 +735,7 @@
       try {
         await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds });
       } catch (e) {
-        console.error("Błąd ładownaia archiwum:", e);
+        console.error("Błąd ładowania archiwum:", e);
       }
     }
     showView('view-repertuar');
