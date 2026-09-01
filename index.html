@@ -52,13 +52,43 @@
 
     .banner-container {
       width: 100%;
-      height: 200px;
+      height: 180px;
       border-radius: 20px;
       overflow: hidden;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       display: flex;
       justify-content: center;
       align-items: center;
+    }
+
+    /* OGŁOSZENIA */
+    .announcements-card {
+      background: var(--card-bg);
+      border: 2px solid var(--accent-yellow);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 15px;
+      box-shadow: var(--shadow);
+    }
+    .announcements-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .announcements-title {
+      font-weight: 800;
+      color: var(--text);
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .announcements-content {
+      font-size: 0.95rem;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      color: var(--text);
     }
 
     .btn {
@@ -153,6 +183,21 @@
       margin-bottom: 8px;
     }
     .controls-panel { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
+
+    .repertuar-header-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 16px;
+      margin-bottom: 15px;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+    .repertuar-header-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
   </style>
 </head>
 <body>
@@ -172,6 +217,15 @@
   <div id="view-home">
     <div class="banner-container">
       <img src="1787475381723.png" alt="Logo Scholi" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;">
+    </div>
+
+    <!-- OGŁOSZENIA -->
+    <div class="announcements-card" id="announcements-card">
+      <div class="announcements-header">
+        <span class="announcements-title">📢 Ogłoszenia</span>
+        <button class="btn btn-secondary btn-small admin-only hidden" onclick="openAnnouncementsForm()">✏️ Edytuj</button>
+      </div>
+      <div class="announcements-content" id="announcements-display">Brak aktualnych ogłoszeń.</div>
     </div>
 
     <button class="btn btn-filled" onclick="showView('view-songs')">📖 Przeglądaj Śpiewnik</button>
@@ -205,9 +259,16 @@
       <div></div>
     </div>
     
-    <div class="admin-only hidden" style="margin-bottom: 15px;">
-      <input type="text" id="archive-name-input" class="input-field" placeholder="Nazwa zestawu (np. Niedziela 15.10)">
-      <button class="btn btn-filled btn-small" style="width: 100%;" onclick="saveRepertuarToArchive()">💾 Zapisz do Archiwum w Chmurze</button>
+    <!-- Tytuł Repertuaru -->
+    <div class="repertuar-header-box">
+      <div class="repertuar-header-title" id="repertuar-title-display">Brak ustawionego tytułu</div>
+    </div>
+
+    <div class="admin-only hidden" style="margin-bottom: 15px; background: var(--card-bg); padding: 12px; border-radius: 14px; border: 1px dashed var(--primary);">
+      <label style="font-size: 0.85rem; font-weight: bold; color: var(--text-sub); display: block; margin-bottom: 6px;">Ustawienia Repertuaru (Admin):</label>
+      <input type="text" id="repertuar-title-input" class="input-field" placeholder="Tytuł zestawu (np. Niedziela 24.05)" style="margin-bottom: 8px;">
+      <button class="btn btn-filled btn-small" style="width: 100%; margin-bottom: 8px;" onclick="saveRepertuarTitle()">✏️ Zapisz Tytuł Repertuaru</button>
+      <button class="btn btn-secondary btn-small" style="width: 100%;" onclick="saveRepertuarToArchive()">💾 Zapisz cały zestaw do Archiwum</button>
     </div>
 
     <div id="repertuar-list"></div>
@@ -250,7 +311,7 @@
     <div id="view-lyrics" class="song-lyrics"></div>
   </div>
 
-  <!-- WIDOK: FORMULARZ DODAWANIA / EDYCJI -->
+  <!-- WIDOK: FORMULARZ DODAWANIA / EDYCJI UTWORU -->
   <div id="view-form" class="hidden">
     <div class="nav-bar">
       <button class="btn btn-secondary btn-small" onclick="showView('view-songs')">Anuluj</button>
@@ -267,6 +328,17 @@
 
     <button class="btn btn-filled" onclick="saveSong()">💾 Zapisz w chmurze</button>
     <button id="btn-delete" class="btn btn-danger hidden" onclick="deleteCurrentSong()">🗑️ Usuń utwór</button>
+  </div>
+
+  <!-- WIDOK: EDYCJA OGŁOSZEŃ -->
+  <div id="view-announcements-form" class="hidden">
+    <div class="nav-bar">
+      <button class="btn btn-secondary btn-small" onclick="showView('view-home')">Anuluj</button>
+      <h2>Edytuj Ogłoszenia</h2>
+      <div></div>
+    </div>
+    <textarea id="form-announcements-text" class="input-field" style="height: 200px;" placeholder="Wpisz treść bieżących ogłoszeń..."></textarea>
+    <button class="btn btn-filled" onclick="saveAnnouncements()">💾 Zapisz Ogłoszenia</button>
   </div>
 
   <!-- WIDOK: MASOWE DODAWANIE -->
@@ -315,6 +387,8 @@
   let songs = [];
   let archives = [];
   let repertuarIds = [];
+  let repertuarTitle = "Niedzielny Repertuar";
+  let announcementsText = "";
 
   let isAdmin = false;
   let activeCategory = 'Wszystkie';
@@ -327,47 +401,8 @@
 
   const ADMIN_PIN = "1234";
 
-  // Dwa zestawy skal (duże i małe litery)
   const scaleMajor = ["C", "Cis", "D", "Dis", "E", "F", "Fis", "G", "Gis", "A", "B", "H"];
   const scaleMinor = ["c", "cis", "d", "dis", "e", "f", "fis", "g", "gis", "a", "b", "h"];
-
-  // Rejestracja PWA
-  let deferredPrompt;
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('install')) {
-      showInstallBanner();
-    }
-  });
-
-  function showInstallBanner() {
-    const banner = document.createElement('div');
-    banner.id = 'pwa-install-banner';
-    banner.innerHTML = `
-      <div style="position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-bg); border-top: 2px solid var(--primary); padding: 20px; box-shadow: 0 -5px 25px rgba(0,0,0,0.2); text-align: center; z-index: 9999;">
-        <h3 style="color: var(--primary); margin-bottom: 8px;">Zainstaluj aplikację Scholi</h3>
-        <p style="font-size: 0.9rem; color: var(--text-sub); margin-bottom: 15px;">Zainstaluj aplikację na telefonie, aby mieć do niej szybki dostęp bez przeglądarki.</p>
-        <div style="display: flex; gap: 10px; justify-content: center;">
-          <button id="pwa-install-btn" class="btn btn-filled" style="width: auto; padding: 10px 20px;">📲 Zainstaluj teraz</button>
-          <button onclick="document.getElementById('pwa-install-banner').remove()" class="btn btn-secondary" style="width: auto; padding: 10px 15px;">Później</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(banner);
-
-    document.getElementById('pwa-install-btn').addEventListener('click', async () => {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        deferredPrompt = null;
-        banner.remove();
-      } else {
-        alert("Aby zainstalować aplikację na iOS (Safari), kliknij przycisk 'Udostępnij' i wybierz 'Do ekranu początkowego'.");
-      }
-    });
-  }
 
   // Motyw
   const savedTheme = localStorage.getItem('schola_theme') || 'light';
@@ -420,10 +455,11 @@
     renderAll();
   }
 
-  // Synch z Firebase (Songbook & Repertuar & Archiwum)
+  // Synch Firebase
   function initFirebaseSync() {
     if (!db) return;
 
+    // Pieśni
     onSnapshot(collection(db, "songs"), (snapshot) => {
       const fetched = [];
       snapshot.forEach((docSnap) => {
@@ -433,16 +469,32 @@
       renderAll();
     });
 
+    // Repertuar
     onSnapshot(doc(db, "repertuar", "current"), (docSnap) => {
       if (docSnap.exists()) {
-        repertuarIds = docSnap.data().songIds || [];
+        const data = docSnap.data();
+        repertuarIds = data.songIds || [];
+        repertuarTitle = data.title || "Bieżący Repertuar";
       } else {
         repertuarIds = [];
+        repertuarTitle = "Bieżący Repertuar";
       }
+      renderRepertuarHeader();
       renderRepertuar();
       renderSongsList();
     });
 
+    // Ogłoszenia
+    onSnapshot(doc(db, "settings", "announcements"), (docSnap) => {
+      if (docSnap.exists()) {
+        announcementsText = docSnap.data().text || "";
+      } else {
+        announcementsText = "";
+      }
+      renderAnnouncements();
+    });
+
+    // Archiwum
     onSnapshot(collection(db, "archives"), (snapshot) => {
       const fetchedArch = [];
       snapshot.forEach((docSnap) => {
@@ -461,11 +513,70 @@
   };
 
   function renderAll() {
+    renderAnnouncements();
+    renderRepertuarHeader();
     renderCategoryChips();
     renderSongsList();
     renderRepertuar();
     renderArchives();
   }
+
+  function renderAnnouncements() {
+    const display = document.getElementById('announcements-display');
+    const card = document.getElementById('announcements-card');
+    if (!display || !card) return;
+
+    if (announcementsText.trim() === '') {
+      display.innerText = "Brak aktualnych ogłoszeń.";
+      display.style.color = "var(--text-sub)";
+    } else {
+      display.innerText = announcementsText;
+      display.style.color = "var(--text)";
+    }
+  }
+
+  window.openAnnouncementsForm = function() {
+    if (!isAdmin) return;
+    document.getElementById('form-announcements-text').value = announcementsText;
+    showView('view-announcements-form');
+  };
+
+  window.saveAnnouncements = async function() {
+    if (!isAdmin) return;
+    const text = document.getElementById('form-announcements-text').value;
+    if (db) {
+      try {
+        await setDoc(doc(db, "settings", "announcements"), { text });
+        showView('view-home');
+      } catch (e) {
+        console.error("Błąd zapisu ogłoszeń:", e);
+      }
+    }
+  };
+
+  function renderRepertuarHeader() {
+    const titleDisplay = document.getElementById('repertuar-title-display');
+    const titleInput = document.getElementById('repertuar-title-input');
+    if (titleDisplay) titleDisplay.innerText = repertuarTitle;
+    if (titleInput && !document.activeElement.isSameNode(titleInput)) {
+      titleInput.value = repertuarTitle;
+    }
+  }
+
+  window.saveRepertuarTitle = async function() {
+    if (!isAdmin) return;
+    const input = document.getElementById('repertuar-title-input');
+    const newTitle = input.value.trim() || "Bieżący Repertuar";
+    
+    if (db) {
+      try {
+        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds, title: newTitle });
+        alert("Zapisano tytuł repertuaru!");
+      } catch (e) {
+        console.error("Błąd zapisu tytułu:", e);
+      }
+    }
+  };
 
   function getUniqueCategories() {
     const cats = new Set();
@@ -624,12 +735,10 @@
     chordsEl.innerHTML = capoBadge + transposed;
   }
 
-  // Transpozycja z obsługą dużej i małej notacji polsko-niemieckiej (C/c, Cis/cis, B/b, H/h)
   function transposeChordsPL(chordsText, steps) {
     if (steps === 0) return chordsText;
 
     return chordsText.replace(/\b([A-Ga-g][is]*|[BHbh])(maj7|7|sus4|add9|dim)?\b/g, (match, root, suffix) => {
-      // Szukanie w tonacji dużej
       let idxMajor = scaleMajor.indexOf(root);
       if (idxMajor !== -1) {
         let newIdx = (idxMajor + steps) % 12;
@@ -637,7 +746,6 @@
         return scaleMajor[newIdx] + (suffix || '');
       }
 
-      // Szukanie w tonacji małej
       let idxMinor = scaleMinor.indexOf(root);
       if (idxMinor !== -1) {
         let newIdx = (idxMinor + steps) % 12;
@@ -702,7 +810,7 @@
     
     if (db) {
       try {
-        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds });
+        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds, title: repertuarTitle });
       } catch (e) {
         console.error("Błąd zapisu repertuaru:", e);
       }
@@ -711,15 +819,13 @@
 
   window.saveRepertuarToArchive = async function() {
     if (!isAdmin) return;
-    const input = document.getElementById('archive-name-input');
-    const name = input.value.trim();
-    if (!name || repertuarIds.length === 0) return alert("Wpisz nazwę zestawu i upewnij się, że repertuar nie jest pusty!");
+    const name = repertuarTitle || "Archiwalny Repertuar";
+    if (repertuarIds.length === 0) return alert("Repertuar jest pusty!");
 
     if (db) {
       try {
         await addDoc(collection(db, "archives"), { name, songIds: [...repertuarIds], createdAt: new Date() });
-        input.value = '';
-        alert("Zapisano zestaw w chmurze!");
+        alert(`Zapisano zestaw "${name}" w chmurze!`);
       } catch (e) {
         console.error("Błąd zapisu archiwum:", e);
       }
@@ -730,10 +836,11 @@
     const arch = archives.find(a => a.id === id);
     if (!arch) return;
     repertuarIds = [...(arch.songIds || [])];
+    repertuarTitle = arch.name || "Repertuar z Archiwum";
 
     if (db && isAdmin) {
       try {
-        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds });
+        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds, title: repertuarTitle });
       } catch (e) {
         console.error("Błąd ładowania archiwum:", e);
       }
