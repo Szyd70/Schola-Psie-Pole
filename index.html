@@ -3,1227 +3,158 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schola Dziecięca Psie Pole</title>
-  
-  <link rel="icon" type="image/png" href="1787475381723.png">
-  <link rel="apple-touch-icon" href="1787475381723.png">
-  <link rel="manifest" href="manifest.json">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="theme-color" content="#118ab2">
-
+  <title>Śpiewnik Liturgiczny</title>
   <style>
-    :root {
-      --bg: #fffdf9;
-      --card-bg: #ffffff;
-      --primary: #118ab2;
-      --primary-hover: #0ed0d0;
-      --accent: #ff477e;
-      --accent-yellow: #ffd166;
-      --text: #2b2d42;
-      --text-sub: #6c757d;
-      --border: #e9ecef;
-      --chords-bg: #f1f9ff;
-      --shadow: 0 8px 20px rgba(17, 138, 178, 0.08);
-      --role-bg: #e2f1f8;
-      --role-text: #0a5872;
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: 20px auto;
+      padding: 0 15px;
+      background-color: #f4f6f8;
+      color: #333;
     }
-
-    [data-theme="dark"] {
-      --bg: #1a1e29;
-      --card-bg: #252b3b;
-      --primary: #4cc9f0;
-      --primary-hover: #4895ef;
-      --accent: #ff477e;
-      --accent-yellow: #ffd166;
-      --text: #f8f9fa;
-      --text-sub: #a0aec0;
-      --border: #343d52;
-      --chords-bg: #1c2333;
-      --shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-      --role-bg: #1f3a4b;
-      --role-text: #70d6ff;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Nunito', system-ui, -apple-system, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; transition: background 0.3s, color 0.3s; }
-    .container { width: 100%; max-width: 500px; }
-
-    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .header-controls { display: flex; gap: 6px; }
-    h1 { color: var(--primary); font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
-
-    .banner-container {
-      width: 100%;
-      height: 180px;
-      border-radius: 20px;
-      overflow: hidden;
-      margin-bottom: 15px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    /* OGŁOSZENIA */
-    .announcements-card {
-      background: var(--card-bg);
-      border: 2px solid var(--accent-yellow);
-      border-radius: 16px;
-      padding: 14px;
-      margin-bottom: 15px;
-      box-shadow: var(--shadow);
-    }
-    .announcements-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-    }
-    .announcements-title {
-      font-weight: 800;
-      color: var(--text);
-      font-size: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .announcements-content {
-      font-size: 0.95rem;
-      line-height: 1.4;
-      white-space: pre-wrap;
-      color: var(--text);
-    }
-
-    .btn {
-      width: 100%;
-      padding: 16px;
-      margin-bottom: 12px;
-      border: 2px solid var(--border);
-      background-color: var(--card-bg);
-      color: var(--text);
-      border-radius: 166px;
-      font-size: 1.05rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      text-decoration: none;
-      box-shadow: var(--shadow);
-      transition: all 0.2s ease;
-    }
-    .btn:active { transform: scale(0.98); }
-    
-    .btn-filled { background-color: var(--primary); color: #ffffff; border-color: var(--primary); }
-    .btn-secondary { background-color: var(--card-bg); border-color: var(--border); color: var(--text); }
-    .btn-danger { border-color: var(--accent); color: var(--accent); }
-    .btn-small { width: auto; padding: 6px 12px; font-size: 0.8rem; margin-bottom: 0; border-radius: 12px; }
-
-    .hidden { display: none !important; }
-
-    .song-item, .archive-item {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px;
-      margin-bottom: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: var(--shadow);
-      transition: border-color 0.2s, background-color 0.2s;
-    }
-    .song-item.drag-over {
-      border: 2px dashed var(--primary);
-      background-color: var(--chords-bg);
-    }
-    .song-title-btn {
-      background: none; border: none; color: var(--text);
-      font-size: 1.05rem; font-weight: 700; text-align: left;
-      flex-grow: 1; cursor: pointer;
-    }
-    .song-category { 
-      font-size: 0.75rem; 
-      color: var(--primary); 
-      display: inline-block; 
-      margin-top: 4px;
-      background: rgba(17, 138, 178, 0.1);
-      padding: 2px 8px;
-      border-radius: 8px;
-      font-weight: 600;
-    }
-    .song-role {
-      font-size: 0.75rem;
-      color: var(--role-text);
-      background: var(--role-bg);
-      padding: 2px 8px;
-      border-radius: 8px;
-      font-weight: 800;
-      display: inline-block;
-      margin-top: 4px;
-      margin-right: 4px;
-    }
-
-    .input-field {
-      width: 100%; padding: 14px; margin-bottom: 12px;
-      background-color: var(--card-bg); border: 2px solid var(--border);
-      color: var(--text); border-radius: 14px; font-size: 1rem;
-      outline: none;
-    }
-    .input-field:focus { border-color: var(--primary); }
-    textarea.input-field { height: 120px; resize: vertical; }
-    textarea#form-bulk-text { height: 260px; font-family: monospace; font-size: 0.9rem; }
-
-    .checkbox-container {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 12px;
-      font-weight: 700;
-      color: var(--text);
-      cursor: pointer;
-    }
-    .checkbox-container input[type="checkbox"] {
-      width: 20px;
-      height: 20px;
-      accent-color: var(--primary);
-      cursor: pointer;
-    }
-
-    .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-
-    .cat-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; }
-    .cat-chip {
-      background: var(--card-bg); border: 1px solid var(--border); color: var(--text-sub);
-      padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; white-space: nowrap; cursor: pointer;
-      box-shadow: var(--shadow);
-    }
-    .cat-chip.active { background: var(--primary); color: #ffffff; border-color: var(--primary); }
-
-    /* ROLOWANIE / PRZECIĄGANIE */
-    .roles-palette {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 12px;
-      padding: 10px;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      box-shadow: var(--shadow);
-    }
-    .role-badge {
-      background: var(--role-bg);
-      color: var(--role-text);
-      padding: 6px 12px;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: 800;
-      cursor: grab;
-      user-select: none;
-      border: 1px solid var(--primary);
-    }
-    .role-badge:active { cursor: grabbing; }
-
-    .song-lyrics { white-space: pre-wrap; font-size: 1.15rem; line-height: 1.6; margin-top: 15px; }
-    .song-chords {
-      white-space: pre-wrap; font-family: monospace; font-size: 1.1rem;
-      color: var(--primary); background: var(--chords-bg); padding: 12px;
-      border-radius: 12px; margin-top: 10px; display: none; font-weight: bold;
-    }
-    .capo-badge {
-      display: inline-block;
-      background: var(--accent-yellow);
-      color: #000;
-      font-weight: bold;
-      font-size: 0.85rem;
-      padding: 4px 10px;
-      border-radius: 12px;
-      margin-bottom: 8px;
-    }
-    .controls-panel { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
-
-    .repertuar-header-box {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 12px 16px;
-      margin-bottom: 15px;
+    h1 {
       text-align: center;
-      box-shadow: var(--shadow);
+      color: #2c3e50;
     }
-    .repertuar-header-title {
-      font-size: 1.15rem;
-      font-weight: 800;
-      color: var(--primary);
+    .form-group {
+      margin-bottom: 15px;
+      background: white;
+      padding: 12px;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
+    label {
+      display: block;
+      font-weight: bold;
+      color: #2c3e50;
+      margin-bottom: 5px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #2c3e50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1a252f;
+    }
+    #status {
+      margin-top: 15px;
+      padding: 10px;
+      text-align: center;
+      border-radius: 4px;
+      display: none;
+      font-weight: bold;
+    }
+    .success { background-color: #d4edda; color: #155724; }
+    .error { background-color: #f8d7da; color: #721c24; }
   </style>
 </head>
 <body>
 
-<div class="container">
+  <h1>Program Pieśni</h1>
 
-  <!-- NAGŁÓWEK -->
-  <div class="header-top">
-    <h1>SCHOLA DZIECIĘCA</h1>
-    <div class="header-controls">
-      <button class="btn btn-secondary btn-small" onclick="toggleAdminMode()" id="role-btn">🔑 Zaloguj</button>
-      <button class="btn btn-secondary btn-small" onclick="toggleTheme()" id="theme-btn">🌙</button>
-    </div>
-  </div>
-
-  <!-- EKRAN GŁÓWNY -->
-  <div id="view-home">
-    <div class="banner-container">
-      <img src="1787475381723.png" alt="Logo Scholi" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;">
+  <form id="songbookForm">
+    <div class="form-group">
+      <label for="wejscie">Wejście:</label>
+      <input type="text" id="wejscie" placeholder="Tytuł pieśni...">
     </div>
 
-    <!-- OGŁOSZENIA -->
-    <div class="announcements-card" id="announcements-card">
-      <div class="announcements-header">
-        <span class="announcements-title">📢 Ogłoszenia</span>
-        <button class="btn btn-secondary btn-small admin-only hidden" onclick="openAnnouncementsForm()">✏️ Edytuj</button>
-      </div>
-      <div class="announcements-content" id="announcements-display">Brak aktualnych ogłoszeń.</div>
+    <div class="form-group">
+      <label for="ofiarowanie">Ofiarowanie:</label>
+      <input type="text" id="ofiarowanie" placeholder="Tytuł pieśni...">
     </div>
 
-    <button class="btn btn-filled" onclick="showView('view-songs')">📖 Przeglądaj Śpiewnik</button>
-    <button class="btn btn-filled" onclick="showView('view-repertuar')">📌 Bieżący Repertuar</button>
-    <button class="btn btn-filled" onclick="showView('view-archive')">📁 Archiwum Repertuarów</button>
-    
-    <div class="admin-only hidden">
-      <div style="margin: 20px 0 10px 0; border-top: 1px dashed var(--border);"></div>
-      <button class="btn btn-secondary" onclick="openAddForm()">➕ Dodaj Utwór</button>
-      <button class="btn btn-secondary" onclick="openBulkForm()">📥 Dodaj masowo utwory</button>
-    </div>
-  </div>
-
-  <!-- WIDOK: ŚPIEWNIK -->
-  <div id="view-songs" class="hidden">
-    <div class="nav-bar">
-      <button class="btn btn-secondary btn-small" onclick="showView('view-home')">⬅️ Wróć</button>
-      <h2>Śpiewnik</h2>
-      <div></div>
-    </div>
-    <input type="text" id="search-input" class="input-field" placeholder="🔎 Szukaj pieśni..." onkeyup="filterSongs()">
-    <div class="cat-bar" id="categories-bar"></div>
-    <div id="all-songs-list"></div>
-  </div>
-
-  <!-- WIDOK: REPERTUAR -->
-  <div id="view-repertuar" class="hidden">
-    <div class="nav-bar">
-      <button class="btn btn-secondary btn-small" onclick="showView('view-home')">⬅️ Wróć</button>
-      <h2>Bieżący Repertuar</h2>
-      <div></div>
-    </div>
-    
-    <!-- Tytuł Repertuaru -->
-    <div class="repertuar-header-box">
-      <div class="repertuar-header-title" id="repertuar-title-display">Brak ustawionego tytułu</div>
+    <div class="form-group">
+      <label for="komunia">Komunia:</label>
+      <input type="text" id="komunia" placeholder="Tytuł pieśni...">
     </div>
 
-    <!-- PALETA RÓL (ADMIN ONLY) -->
-    <div class="admin-only hidden">
-      <label style="font-size: 0.85rem; font-weight: bold; color: var(--text-sub); display: block; margin-bottom: 6px;">
-        💡 Przeciągnij rolę na utwór poniżej:
-      </label>
-      <div class="roles-palette">
-        <div class="role-badge" draggable="true" ondragstart="handleDragStart(event, 'Wejście')">🏷️ Wejście</div>
-        <div class="role-badge" draggable="true" ondragstart="handleDragStart(event, 'Przygotowanie Darów')">🏷️ Przygotowanie Darów</div>
-        <div class="role-badge" draggable="true" ondragstart="handleDragStart(event, 'Komunia')">🏷️ Komunia</div>
-        <div class="role-badge" draggable="true" ondragstart="handleDragStart(event, 'Dziękczynienie')">🏷️ Dziękczynienie</div>
-        <div class="role-badge" draggable="true" ondragstart="handleDragStart(event, 'Zakończenie')">🏷️ Zakończenie</div>
-      </div>
+    <div class="form-group">
+      <label for="uwielbienie">Uwielbienie:</label>
+      <input type="text" id="uwielbienie" placeholder="Tytuł pieśni...">
     </div>
 
-    <div class="admin-only hidden" style="margin-bottom: 15px; background: var(--card-bg); padding: 12px; border-radius: 14px; border: 1px dashed var(--primary);">
-      <label style="font-size: 0.85rem; font-weight: bold; color: var(--text-sub); display: block; margin-bottom: 6px;">Ustawienia Repertuaru (Admin):</label>
-      <input type="text" id="repertuar-title-input" class="input-field" placeholder="Tytuł zestawu (np. Niedziela 24.05)" style="margin-bottom: 8px;">
-      <button class="btn btn-filled btn-small" style="width: 100%; margin-bottom: 8px;" onclick="saveRepertuarTitle()">✏️ Zapisz Tytuł Repertuaru</button>
-      <button class="btn btn-secondary btn-small" style="width: 100%;" onclick="saveRepertuarToArchive()">💾 Zapisz cały zestaw do Archiwum</button>
+    <div class="form-group">
+      <label for="wyjscie">Zakończenie:</label>
+      <input type="text" id="wyjscie" placeholder="Tytuł pieśni...">
     </div>
 
-    <div id="repertuar-list"></div>
-  </div>
+    <button type="submit" id="saveBtn">Zapisz w chmurze</button>
+  </form>
 
-  <!-- WIDOK: ARCHIWUM -->
-  <div id="view-archive" class="hidden">
-    <div class="nav-bar">
-      <button class="btn btn-secondary btn-small" onclick="showView('view-home')">⬅️ Wróć</button>
-      <h2>Archiwum</h2>
-      <div></div>
-    </div>
-    <div id="archive-list"></div>
-  </div>
+  <div id="status"></div>
 
-  <!-- WIDOK: POJEDYNCZA PIEŚŃ -->
-  <div id="view-single" class="hidden">
-    <div class="nav-bar">
-      <button class="btn btn-secondary btn-small" onclick="goBackFromSong()">⬅️ Wróć</button>
-      <div>
-        <span id="view-role" class="song-role hidden"></span>
-        <span id="view-category" class="song-category"></span>
-      </div>
-      <button class="btn btn-secondary btn-small admin-only hidden" onclick="editCurrentSong()">✏️ Edytuj</button>
-    </div>
+  <!-- Firebase SDK JS v10 (Modular) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    <h2 id="view-title" style="margin-top: 10px; color: var(--primary);"></h2>
-    
-    <div id="view-audio-container" class="hidden" style="margin-top: 10px;">
-      <a id="view-audio-btn" href="#" target="_blank" class="btn btn-secondary btn-small" style="display: inline-flex; width: auto;">🎧 Posłuchaj nagrania</a>
-    </div>
+    // UWAGA: Uzupełnij poniższe dane konfiguracją ze swojej konsoli Firebase
+    const firebaseConfig = {
+      apiKey: "TWOJ_API_KEY",
+      authDomain: "TWOJ_PROJECT_ID.firebaseapp.com",
+      projectId: "TWOJ_PROJECT_ID",
+      storageBucket: "TWOJ_PROJECT_ID.appspot.com",
+      messagingSenderId: "TWOJ_SENDER_ID",
+      appId: "TWOJ_APP_ID"
+    };
 
-    <div class="controls-panel">
-      <button class="btn btn-secondary btn-small" onclick="toggleChords()">🎸 Akordy</button>
-      <button class="btn btn-secondary btn-small" onclick="transpose(1)">🎸 Ton +1</button>
-      <button class="btn btn-secondary btn-small" onclick="transpose(-1)">🎸 Ton -1</button>
-      <button class="btn btn-secondary btn-small" onclick="changeFontSize(2)">🔍 A+</button>
-      <button class="btn btn-secondary btn-small" onclick="changeFontSize(-2)">🔍 A-</button>
-      <button class="btn btn-secondary btn-small" id="btn-scroll" onclick="toggleAutoScroll()">📜 Auto Scroll</button>
-    </div>
-
-    <div id="view-chords" class="song-chords"></div>
-    <div id="view-lyrics" class="song-lyrics"></div>
-  </div>
-
-  <!-- WIDOK: FORMULARZ DODAWANIA / EDYCJI UTWORU -->
-  <div id="view-form" class="hidden">
-    <div class="nav-bar">
-      <button class="btn btn-secondary btn-small" onclick="showView('view-songs')">Anuluj</button>
-      <h2 id="form-header">Dodaj Utwór</h2>
-      <div></div>
-    </div>
-
-    <input type="hidden" id="form-id">
-    <input type="text" id="form-title" class="input-field" placeholder="Tytuł utworu">
-    <input type="text" id="form-category" class="input-field" placeholder="Kategoria (np. Uwielbienie, Kolędy)">
-    <input type="text" id="form-audio-url" class="input-field" placeholder="Link do nagrania (YouTube / Drive / MP3)">
-    
-    <label class="checkbox-container">
-      <input type="checkbox" id="form-gesture">
-      Z pokazywaniem 🙌
-    </label>
-
-    <textarea id="form-lyrics" class="input-field" placeholder="Tekst pieśni..."></textarea>
-    <textarea id="form-chords" class="input-field" placeholder="Akordy (opcjonalnie)..."></textarea>
-
-    <button class="btn btn-filled" onclick="saveSong()">💾 Zapisz w chmurze</button>
-    <button id="btn-delete" class="btn btn-danger hidden" onclick="deleteCurrentSong()">🗑️ Usuń utwór</button>
-  </div>
-
-  <!-- WIDOK: EDYCJA OGŁOSZEŃ -->
-  <div id="view-announcements-form" class="hidden">
-    <div class="nav-bar">
-      <button class="btn btn-secondary btn-small" onclick="showView('view-home')">Anuluj</button>
-      <h2>Edytuj Ogłoszenia</h2>
-      <div></div>
-    </div>
-    <textarea id="form-announcements-text" class="input-field" style="height: 200px;" placeholder="Wpisz treść bieżących ogłoszeń..."></textarea>
-    <button class="btn btn-filled" onclick="saveAnnouncements()">💾 Zapisz Ogłoszenia</button>
-  </div>
-
-  <!-- WIDOK: MASOWE DODAWANIE -->
-  <div id="view-bulk" class="hidden">
-    <div class="nav-bar">
-      <button class="btn btn-secondary btn-small" onclick="showView('view-home')">Anuluj</button>
-      <h2>Import Masowy</h2>
-      <div></div>
-    </div>
-    <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 10px;">
-      Format:<br>
-      "Tytuł Pieśni" [Kategoria]<br>
-      # Tekst<br>Linia tekstu...<br>
-      # Akordy<br>Linia akordów...<br>
-      URL: https://...
-    </p>
-    <textarea id="form-bulk-text" class="input-field" placeholder='Wklej dane tutaj...'></textarea>
-    <button class="btn btn-filled" onclick="processBulkImport()">🚀 Zaimportuj wszystkie do chmury</button>
-  </div>
-
-</div>
-
-<!-- LOGIKA APLIKACJI I FIREBASE -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyBXxeXd2K2HGzK8NmPUtlhqttRVYdbDSkE",
-    authDomain: "schola-dziecieca-psie-pole.firebaseapp.com",
-    projectId: "schola-dziecieca-psie-pole",
-    storageBucket: "schola-dziecieca-psie-pole.firebasestorage.app",
-    messagingSenderId: "717275104040",
-    appId: "1:717275104040:web:98869a28471b1ce01f461d",
-    measurementId: "G-DWZK2270GF"
-  };
-
-  let db = null;
-  try {
+    // Inicjalizacja Firebase i Firestore
     const app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-  } catch (e) {
-    console.error("Błąd połączenia z Firebase:", e);
-  }
+    const db = getFirestore(app);
 
-  let songs = [];
-  let archives = [];
-  let repertuarIds = [];
-  let repertuarRoles = {}; // { songId: roleName }
-  let repertuarTitle = "Niedzielny Repertuar";
-  let announcementsText = "";
+    const form = document.getElementById('songbookForm');
+    const statusDiv = document.getElementById('status');
+    const saveBtn = document.getElementById('saveBtn');
 
-  let isAdmin = false;
-  let activeCategory = 'Wszystkie';
-  let currentSongId = null;
-  let previousView = 'view-home';
-  let scrollInterval = null;
-  let isScrolling = false;
-  let currentTransposeSteps = 0;
-  let originalChords = "";
-
-  const ADMIN_PIN = "0410";
-
-  // KOLEJNOŚĆ LITURGICZNA RÓL
-  const ROLE_ORDER = {
-    "Wejście": 1,
-    "Przygotowanie Darów": 2,
-    "Komunia": 3,
-    "Dziękczynienie": 4,
-    "Zakończenie": 5
-  };
-
-  const scaleMajor = ["C", "Cis", "D", "Dis", "E", "F", "Fis", "G", "Gis", "A", "B", "H"];
-  const scaleMinor = ["c", "cis", "d", "dis", "e", "f", "fis", "g", "gis", "a", "b", "h"];
-
-  // Motyw
-  const savedTheme = localStorage.getItem('schola_theme') || 'light';
-  if (savedTheme === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    document.getElementById('theme-btn').innerText = "☀️";
-  }
-
-  window.toggleTheme = function() {
-    const current = document.documentElement.getAttribute('data-theme');
-    if (current === 'dark') {
-      document.documentElement.removeAttribute('data-theme');
-      localStorage.setItem('schola_theme', 'light');
-      document.getElementById('theme-btn').innerText = "🌙";
-    } else {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      localStorage.setItem('schola_theme', 'dark');
-      document.getElementById('theme-btn').innerText = "☀️";
-    }
-  };
-
-  window.toggleAdminMode = function() {
-    if (isAdmin) {
-      isAdmin = false;
-      updateRoleUI();
-    } else {
-      const pin = prompt("Wprowadź kod PIN Admina:");
-      if (pin === ADMIN_PIN) {
-        isAdmin = true;
-        updateRoleUI();
-      } else if (pin !== null) {
-        alert("Błędny kod PIN!");
-      }
-    }
-  };
-
-  function updateRoleUI() {
-    const roleBtn = document.getElementById('role-btn');
-    const adminElements = document.querySelectorAll('.admin-only');
-
-    if (isAdmin) {
-      roleBtn.innerText = "🔒 Wyjdź";
-      roleBtn.style.borderColor = "var(--accent)";
-      adminElements.forEach(el => el.classList.remove('hidden'));
-    } else {
-      roleBtn.innerText = "🔑 Zaloguj";
-      roleBtn.style.borderColor = "var(--border)";
-      adminElements.forEach(el => el.classList.add('hidden'));
-    }
-    renderAll();
-  }
-
-  // Synch Firebase
-  function initFirebaseSync() {
-    if (!db) return;
-
-    // Pieśni
-    onSnapshot(collection(db, "songs"), (snapshot) => {
-      const fetched = [];
-      snapshot.forEach((docSnap) => {
-        fetched.push({ id: docSnap.id, ...docSnap.data() });
-      });
-      songs = fetched;
-      renderAll();
-    });
-
-    // Repertuar
-    onSnapshot(doc(db, "repertuar", "current"), (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        repertuarIds = data.songIds || [];
-        repertuarRoles = data.roles || {};
-        repertuarTitle = data.title || "Bieżący Repertuar";
-      } else {
-        repertuarIds = [];
-        repertuarRoles = {};
-        repertuarTitle = "Bieżący Repertuar";
-      }
-      renderRepertuarHeader();
-      renderRepertuar();
-      renderSongsList();
-    });
-
-    // Ogłoszenia
-    onSnapshot(doc(db, "settings", "announcements"), (docSnap) => {
-      if (docSnap.exists()) {
-        announcementsText = docSnap.data().text || "";
-      } else {
-        announcementsText = "";
-      }
-      renderAnnouncements();
-    });
-
-    // Archiwum
-    onSnapshot(collection(db, "archives"), (snapshot) => {
-      const fetchedArch = [];
-      snapshot.forEach((docSnap) => {
-        fetchedArch.push({ id: docSnap.id, ...docSnap.data() });
-      });
-      archives = fetchedArch;
-      renderArchives();
-    });
-  }
-
-  window.showView = function(viewId) {
-    stopAutoScroll();
-    document.querySelectorAll('.container > div:not(.header-top)').forEach(div => div.classList.add('hidden'));
-    const target = document.getElementById(viewId);
-    if (target) target.classList.remove('hidden');
-  };
-
-  function renderAll() {
-    renderAnnouncements();
-    renderRepertuarHeader();
-    renderCategoryChips();
-    renderSongsList();
-    renderRepertuar();
-    renderArchives();
-  }
-
-  function renderAnnouncements() {
-    const display = document.getElementById('announcements-display');
-    const card = document.getElementById('announcements-card');
-    if (!display || !card) return;
-
-    if (announcementsText.trim() === '') {
-      display.innerText = "Brak aktualnych ogłoszeń.";
-      display.style.color = "var(--text-sub)";
-    } else {
-      display.innerText = announcementsText;
-      display.style.color = "var(--text)";
-    }
-  }
-
-  window.openAnnouncementsForm = function() {
-    if (!isAdmin) return;
-    document.getElementById('form-announcements-text').value = announcementsText;
-    showView('view-announcements-form');
-  };
-
-  window.saveAnnouncements = async function() {
-    if (!isAdmin) return;
-    const text = document.getElementById('form-announcements-text').value;
-    if (db) {
-      try {
-        await setDoc(doc(db, "settings", "announcements"), { text });
-        showView('view-home');
-      } catch (e) {
-        console.error("Błąd zapisu ogłoszeń:", e);
-      }
-    }
-  };
-
-  function renderRepertuarHeader() {
-    const titleDisplay = document.getElementById('repertuar-title-display');
-    const titleInput = document.getElementById('repertuar-title-input');
-    if (titleDisplay) titleDisplay.innerText = repertuarTitle;
-    if (titleInput && !document.activeElement.isSameNode(titleInput)) {
-      titleInput.value = repertuarTitle;
-    }
-  }
-
-  window.saveRepertuarTitle = async function() {
-    if (!isAdmin) return;
-    const input = document.getElementById('repertuar-title-input');
-    const newTitle = input.value.trim() || "Bieżący Repertuar";
-    
-    if (db) {
-      try {
-        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds, roles: repertuarRoles, title: newTitle });
-        alert("Zapisano tytuł repertuaru!");
-      } catch (e) {
-        console.error("Błąd zapisu tytułu:", e);
-      }
-    }
-  };
-
-  function getUniqueCategories() {
-    const cats = new Set();
-    songs.forEach(s => { if (s.category) cats.add(s.category.trim()); });
-    return Array.from(cats).sort((a, b) => a.localeCompare(b, 'pl'));
-  }
-
-  function renderCategoryChips() {
-    const container = document.getElementById('categories-bar');
-    if(!container) return;
-    container.innerHTML = '';
-    const categories = ['Wszystkie', ...getUniqueCategories()];
-
-    categories.forEach(cat => {
-      const btn = document.createElement('button');
-      btn.className = `cat-chip ${activeCategory === cat ? 'active' : ''}`;
-      btn.innerText = cat;
-      btn.onclick = () => {
-        activeCategory = cat;
-        renderCategoryChips();
-        renderSongsList();
-      };
-      container.appendChild(btn);
-    });
-  }
-
-  function renderSongsList() {
-    const container = document.getElementById('all-songs-list');
-    if(!container) return;
-    container.innerHTML = '';
-
-    let filtered = [...songs];
-    if (activeCategory !== 'Wszystkie') {
-      filtered = filtered.filter(s => (s.category || '') === activeCategory);
-    }
-
-    filtered.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'pl'));
-
-    if (filtered.length === 0) {
-      container.innerHTML = '<p style="color: var(--text-sub);">Brak utworów w tej kategorii.</p>';
-      return;
-    }
-
-    filtered.forEach(song => container.appendChild(createSongRow(song, false)));
-  }
-
-  function renderRepertuar() {
-    const container = document.getElementById('repertuar-list');
-    if(!container) return;
-    container.innerHTML = '';
-    const list = songs.filter(s => repertuarIds.includes(s.id));
-
-    // SORTOWANIE WG KOLEJNOŚCI LITURGICZNEJ (ROLE_ORDER), A NASTĘPNIE ALFABETYCZNIE
-    list.sort((a, b) => {
-      const roleA = repertuarRoles[a.id];
-      const roleB = repertuarRoles[b.id];
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
       
-      const orderA = ROLE_ORDER[roleA] || 99;
-      const orderB = ROLE_ORDER[roleB] || 99;
+      saveBtn.disabled = true;
+      saveBtn.innerText = "Zapisywanie...";
+      statusDiv.style.display = 'none';
 
-      if (orderA !== orderB) {
-        return orderA - orderB;
-      }
-      return (a.title || '').localeCompare(b.title || '', 'pl');
-    });
-
-    if (list.length === 0) {
-      container.innerHTML = '<p style="color: var(--text-sub);">Repertuar jest obecnie pusty.</p>';
-      return;
-    }
-
-    list.forEach(song => container.appendChild(createSongRow(song, true)));
-  }
-
-  function renderArchives() {
-    const container = document.getElementById('archive-list');
-    if(!container) return;
-    container.innerHTML = '';
-
-    if (archives.length === 0) {
-      container.innerHTML = '<p style="color: var(--text-sub);">Brak zapisanych archiwów.</p>';
-      return;
-    }
-
-    archives.forEach(arch => {
-      const div = document.createElement('div');
-      div.className = 'archive-item';
-      const deleteBtn = isAdmin ? `<button class="btn btn-danger btn-small" onclick="deleteArchive('${arch.id}')">🗑️</button>` : '';
-      
-      div.innerHTML = `
-        <div>
-          <strong>${arch.name}</strong>
-          <div style="font-size:0.8rem; color:var(--text-sub)">Pieśni: ${(arch.songIds || []).length}</div>
-        </div>
-        <div style="display:flex; gap:6px;">
-          <button class="btn btn-secondary btn-small" onclick="loadArchive('${arch.id}')">📂 Otwórz</button>
-          ${deleteBtn}
-        </div>
-      `;
-      container.appendChild(div);
-    });
-  }
-
-  function createSongRow(song, isRepertuarView = false) {
-    const div = document.createElement('div');
-    div.className = 'song-item';
-    const inRep = repertuarIds.includes(song.id);
-    const audioIcon = (song.audioUrl && song.audioUrl.trim() !== '') ? ' 🎵' : '';
-    const gestureIcon = song.isGesture ? ' 🙌' : '';
-    
-    const roleName = repertuarRoles[song.id];
-    const roleHtml = (isRepertuarView && roleName) ? `<span class="song-role">🏷️ ${roleName}</span>` : '';
-
-    let adminButtons = '';
-    if (isAdmin) {
-      if (isRepertuarView) {
-        adminButtons = `
-          <div style="display:flex; gap:4px; align-items:center;">
-            <button class="btn btn-secondary btn-small" onclick="promptSetRole('${song.id}')">🏷️</button>
-            <button class="btn btn-secondary btn-small" onclick="toggleRepertuar('${song.id}')">➖</button>
-          </div>
-        `;
-      } else {
-        adminButtons = `
-          <button class="btn btn-secondary btn-small" onclick="toggleRepertuar('${song.id}')">
-            ${inRep ? '➖' : '➕'}
-          </button>
-        `;
-      }
-    }
-
-    if (isRepertuarView && isAdmin) {
-      div.ondragover = (e) => { e.preventDefault(); div.classList.add('drag-over'); };
-      div.ondragleave = () => { div.classList.remove('drag-over'); };
-      div.ondrop = (e) => handleDrop(e, song.id);
-    }
-
-    div.innerHTML = `
-      <button class="song-title-btn" onclick="openSong('${song.id}')">
-        ${song.title}${gestureIcon}${audioIcon}<br>
-        ${roleHtml}<span class="song-category">${song.category || 'Uwielbienie'}</span>
-      </button>
-      ${adminButtons}
-    `;
-    return div;
-  }
-
-  // PRZECIĄGANIE I OPUSZCZANIE (DRAG & DROP)
-  window.handleDragStart = function(event, role) {
-    event.dataTransfer.setData("text/plain", role);
-  };
-
-  window.handleDrop = async function(event, songId) {
-    event.preventDefault();
-    document.querySelectorAll('.song-item').forEach(el => el.classList.remove('drag-over'));
-    const role = event.dataTransfer.getData("text/plain");
-    if (role) {
-      await assignRoleToSong(songId, role);
-    }
-  };
-
-  window.promptSetRole = async function(songId) {
-    const roles = ["Wejście", "Przygotowanie Darów", "Komunia", "Dziękczynienie", "Zakończenie", "(Usuń rolę)"];
-    const choice = prompt(`Wybierz rolę (wpisz numer):\n1. Wejście\n2. Przygotowanie Darów\n3. Komunia\n4. Dziękczynienie\n5. Zakończenie\n6. Usuń rolę`);
-    
-    if (choice >= "1" && choice <= "5") {
-      await assignRoleToSong(songId, roles[parseInt(choice) - 1]);
-    } else if (choice === "6") {
-      await assignRoleToSong(songId, null);
-    }
-  };
-
-  async function assignRoleToSong(songId, role) {
-    if (!role) {
-      delete repertuarRoles[songId];
-    } else {
-      repertuarRoles[songId] = role;
-    }
-
-    if (db) {
-      try {
-        await setDoc(doc(db, "repertuar", "current"), {
-          songIds: repertuarIds,
-          roles: repertuarRoles,
-          title: repertuarTitle
-        });
-      } catch (e) {
-        console.error("Błąd przypisywania roli:", e);
-      }
-    }
-  }
-
-  window.openSong = function(id) {
-    const song = songs.find(s => s.id === id);
-    if (!song) return;
-
-    currentSongId = id;
-    currentTransposeSteps = 0;
-    originalChords = song.chords || '';
-
-    if (!document.getElementById('view-songs').classList.contains('hidden')) previousView = 'view-songs';
-    else if (!document.getElementById('view-repertuar').classList.contains('hidden')) previousView = 'view-repertuar';
-    else previousView = 'view-home';
-
-    const gestureIcon = song.isGesture ? ' 🙌' : '';
-    document.getElementById('view-title').innerText = song.title + gestureIcon;
-    document.getElementById('view-category').innerText = song.category || 'Uwielbienie';
-
-    const roleEl = document.getElementById('view-role');
-    const roleName = repertuarRoles[id];
-    if (roleName) {
-      roleEl.innerText = '🏷️ ' + roleName;
-      roleEl.classList.remove('hidden');
-    } else {
-      roleEl.classList.add('hidden');
-    }
-
-    document.getElementById('view-lyrics').innerText = song.lyrics || '';
-    
-    renderChordsView();
-
-    const audioContainer = document.getElementById('view-audio-container');
-    const audioBtn = document.getElementById('view-audio-btn');
-    
-    if (song.audioUrl && song.audioUrl.trim() !== '') {
-      audioBtn.href = song.audioUrl.trim();
-      audioContainer.classList.remove('hidden');
-    } else {
-      audioBtn.href = '#';
-      audioContainer.classList.add('hidden');
-    }
-
-    showView('view-single');
-  };
-
-  function renderChordsView() {
-    const chordsEl = document.getElementById('view-chords');
-    if (!originalChords || originalChords.trim() === '') {
-      chordsEl.innerHTML = 'Brak akordów.';
-      return;
-    }
-
-    const transposed = transposeChordsPL(originalChords, currentTransposeSteps);
-    let capoBadge = "";
-    
-    if (currentTransposeSteps !== 0) {
-      const capoFret = (12 - currentTransposeSteps) % 12;
-      capoBadge = `<div class="capo-badge">🎸 capo ${capoFret}</div><br>`;
-    }
-
-    chordsEl.innerHTML = capoBadge + transposed;
-  }
-
-  function transposeChordsPL(chordsText, steps) {
-    if (steps === 0) return chordsText;
-
-    return chordsText.replace(/\b([A-Ga-g][is]*|[BHbh])(maj7|7|sus4|add9|dim)?\b/g, (match, root, suffix) => {
-      let idxMajor = scaleMajor.indexOf(root);
-      if (idxMajor !== -1) {
-        let newIdx = (idxMajor + steps) % 12;
-        if (newIdx < 0) newIdx += 12;
-        return scaleMajor[newIdx] + (suffix || '');
-      }
-
-      let idxMinor = scaleMinor.indexOf(root);
-      if (idxMinor !== -1) {
-        let newIdx = (idxMinor + steps) % 12;
-        if (newIdx < 0) newIdx += 12;
-        return scaleMinor[newIdx] + (suffix || '');
-      }
-
-      return match;
-    });
-  }
-
-  window.goBackFromSong = function() {
-    showView(previousView);
-  };
-
-  window.toggleChords = function() {
-    const el = document.getElementById('view-chords');
-    el.style.display = (el.style.display === 'block') ? 'none' : 'block';
-  };
-
-  window.changeFontSize = function(delta) {
-    const el = document.getElementById('view-lyrics');
-    const size = parseFloat(window.getComputedStyle(el).fontSize);
-    el.style.fontSize = (size + delta) + 'px';
-  };
-
-  window.transpose = function(steps) {
-    if (!originalChords) return;
-    currentTransposeSteps = (currentTransposeSteps + steps) % 12;
-    if (currentTransposeSteps < 0) currentTransposeSteps += 12;
-    renderChordsView();
-  };
-
-  window.toggleAutoScroll = function() {
-    if (isScrolling) stopAutoScroll();
-    else startAutoScroll();
-  };
-
-  function startAutoScroll() {
-    isScrolling = true;
-    document.getElementById('btn-scroll').innerText = "⏸️ Stop";
-    scrollInterval = setInterval(() => {
-      window.scrollBy(0, 1);
-      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) stopAutoScroll();
-    }, 40);
-  }
-
-  function stopAutoScroll() {
-    isScrolling = false;
-    clearInterval(scrollInterval);
-    const btn = document.getElementById('btn-scroll');
-    if (btn) btn.innerText = "📜 Auto Scroll";
-  }
-
-  window.toggleRepertuar = async function(id) {
-    if (!isAdmin) return;
-    if (repertuarIds.includes(id)) {
-      repertuarIds = repertuarIds.filter(i => i !== id);
-      delete repertuarRoles[id];
-    } else {
-      repertuarIds.push(id);
-    }
-    
-    if (db) {
-      try {
-        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds, roles: repertuarRoles, title: repertuarTitle });
-      } catch (e) {
-        console.error("Błąd zapisu repertuaru:", e);
-      }
-    }
-  };
-
-  window.saveRepertuarToArchive = async function() {
-    if (!isAdmin) return;
-    const name = repertuarTitle || "Archiwalny Repertuar";
-    if (repertuarIds.length === 0) return alert("Repertuar jest pusty!");
-
-    if (db) {
-      try {
-        await addDoc(collection(db, "archives"), {
-          name,
-          songIds: [...repertuarIds],
-          roles: { ...repertuarRoles },
-          createdAt: new Date()
-        });
-        alert(`Zapisano zestaw "${name}" w chmurze!`);
-      } catch (e) {
-        console.error("Błąd zapisu archiwum:", e);
-      }
-    }
-  };
-
-  window.loadArchive = async function(id) {
-    const arch = archives.find(a => a.id === id);
-    if (!arch) return;
-    repertuarIds = [...(arch.songIds || [])];
-    repertuarRoles = { ...(arch.roles || {}) };
-    repertuarTitle = arch.name || "Repertuar z Archiwum";
-
-    if (db && isAdmin) {
-      try {
-        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds, roles: repertuarRoles, title: repertuarTitle });
-      } catch (e) {
-        console.error("Błąd ładowania archiwum:", e);
-      }
-    }
-    showView('view-repertuar');
-  };
-
-  window.deleteArchive = async function(id) {
-    if (!isAdmin) return;
-    if (!confirm("Usunąć to archiwum z chmury?")) return;
-    if (db) {
-      try {
-        await deleteDoc(doc(db, "archives", id));
-      } catch (e) {
-        console.error("Błąd usuwania archiwum:", e);
-      }
-    }
-  };
-
-  window.filterSongs = function() {
-    const q = document.getElementById('search-input').value.toLowerCase();
-    document.querySelectorAll('#all-songs-list .song-item').forEach(row => {
-      row.style.display = row.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
-    });
-  };
-
-  window.openAddForm = function() {
-    if (!isAdmin) return;
-    document.getElementById('form-header').innerText = "Dodaj Utwór";
-    document.getElementById('form-id').value = "";
-    document.getElementById('form-title').value = "";
-    document.getElementById('form-category').value = "";
-    document.getElementById('form-audio-url').value = "";
-    document.getElementById('form-gesture').checked = false;
-    document.getElementById('form-lyrics').value = "";
-    document.getElementById('form-chords').value = "";
-    document.getElementById('btn-delete').classList.add('hidden');
-    showView('view-form');
-  };
-
-  window.editCurrentSong = function() {
-    if (!isAdmin) return;
-    const song = songs.find(s => s.id === currentSongId);
-    if (!song) return;
-
-    document.getElementById('form-header').innerText = "Edytuj Utwór";
-    document.getElementById('form-id').value = song.id;
-    document.getElementById('form-title').value = song.title;
-    document.getElementById('form-category').value = song.category || "";
-    document.getElementById('form-audio-url').value = song.audioUrl || "";
-    document.getElementById('form-gesture').checked = !!song.isGesture;
-    document.getElementById('form-lyrics').value = song.lyrics || "";
-    document.getElementById('form-chords').value = song.chords || "";
-    document.getElementById('btn-delete').classList.remove('hidden');
-    showView('view-form');
-  };
-
-  window.saveSong = async function() {
-    if (!isAdmin) return;
-    const id = document.getElementById('form-id').value;
-    const title = document.getElementById('form-title').value.trim();
-    const category = document.getElementById('form-category').value.trim() || "Uwielbienie";
-    const audioUrl = document.getElementById('form-audio-url').value.trim();
-    const isGesture = document.getElementById('form-gesture').checked;
-    const lyrics = document.getElementById('form-lyrics').value.trim();
-    const chords = document.getElementById('form-chords').value.trim();
-
-    if (!title || !lyrics) return alert("Wypełnij tytuł oraz tekst utworu!");
-
-    const songData = { title, category, audioUrl, isGesture, lyrics, chords };
-
-    try {
-      if (id) {
-        if (db) await updateDoc(doc(doc(db, "songs", id)), songData);
-      } else {
-        if (db) await addDoc(collection(db, "songs"), songData);
-      }
-      showView('view-songs');
-    } catch (e) {
-      console.error("Błąd zapisu do chmury:", e);
-      alert("Błąd zapisu w chmurze! Sprawdź reguły Firebase Firestore.");
-    }
-  };
-
-  window.deleteCurrentSong = async function() {
-    if (!isAdmin) return;
-    if (!confirm("Na pewno usunąć ten utwór z chmury?")) return;
-    const id = document.getElementById('form-id').value;
-    
-    try {
-      if (db) await deleteDoc(doc(db, "songs", id));
-      showView('view-songs');
-    } catch (e) {
-      console.error("Błąd usuwania z chmury:", e);
-      alert("Nie udało się usunąć utworu z chmury.");
-    }
-  };
-
-  window.openBulkForm = function() {
-    if (!isAdmin) return;
-    document.getElementById('form-bulk-text').value = "";
-    showView('view-bulk');
-  };
-
-  window.processBulkImport = async function() {
-    if (!isAdmin) return;
-    const raw = document.getElementById('form-bulk-text').value;
-    if (!raw.trim()) return alert("Wklej dane do importu!");
-
-    const blocks = raw.split(/(?=^")/gm);
-    let count = 0;
-
-    for (let block of blocks) {
-      if (!block.trim()) continue;
-
-      const lines = block.trim().split('\n');
-      let firstLine = lines[0].trim();
-      
-      let title = "Bez tytułu";
-      let category = "Uwielbienie";
-      
-      const titleMatch = firstLine.match(/"([^"]+)"/);
-      if (titleMatch) {
-        title = titleMatch[1];
-        let remainder = firstLine.replace(titleMatch[0], '').trim();
-        const catMatch = remainder.match(/\[(.*?)\]|\((.*?)\)/);
-        if (catMatch) category = (catMatch[1] || catMatch[2]).trim();
-      } else {
-        title = firstLine;
-      }
-
-      let lyricsArr = [];
-      let chordsArr = [];
-      let audioUrl = "";
-      let isGesture = false;
-      let currentMode = "lyrics";
-
-      for (let i = 1; i < lines.length; i++) {
-        let line = lines[i];
-        let lower = line.trim().toLowerCase();
-
-        if (lower.startsWith("# akordy")) {
-          currentMode = "chords";
-          continue;
-        } else if (lower.startsWith("# tekst")) {
-          currentMode = "lyrics";
-          continue;
-        } else if (lower.startsWith("url:")) {
-          audioUrl = line.replace(/^url:\s*/i, '').trim();
-          continue;
-        } else if (lower.includes("pokazywanie") || lower.includes("gesty")) {
-          isGesture = true;
-          continue;
-        }
-
-        if (currentMode === "chords") chordsArr.push(line);
-        else lyricsArr.push(line);
-      }
-
-      const newSongData = {
-        title,
-        category,
-        audioUrl,
-        isGesture,
-        lyrics: lyricsArr.join('\n').trim(),
-        chords: chordsArr.join('\n').trim()
+      const songData = {
+        wejscie: document.getElementById('wejscie').value,
+        ofiarowanie: document.getElementById('ofiarowanie').value,
+        komunia: document.getElementById('komunia').value,
+        uwielbienie: document.getElementById('uwielbienie').value,
+        wyjscie: document.getElementById('wyjscie').value,
+        updatedAt: new Date().toISOString()
       };
 
-      if (db) {
-        try {
-          await addDoc(collection(db, "songs"), newSongData);
-          count++;
-        } catch (e) {
-          console.error("Błąd importu:", e);
-        }
+      try {
+        // Zapis do dokumentu "current" w kolekcji "songbook"
+        await setDoc(doc(db, "songbook", "current"), songData);
+        
+        statusDiv.className = "success";
+        statusDiv.innerText = "Pomyślnie zapisano w chmurze!";
+        statusDiv.style.display = 'block';
+      } catch (error) {
+        console.error("Szczegóły błędu Firebase:", error);
+        
+        statusDiv.className = "error";
+        statusDiv.innerText = "Błąd zapisu w chmurze: " + (error.message || "Brak połączenia lub odmowa dostępu");
+        statusDiv.style.display = 'block';
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerText = "Zapisz w chmurze";
       }
-    }
-
-    alert(`Zaimportowano ${count} utworów do chmury!`);
-    showView('view-songs');
-  };
-
-  initFirebaseSync();
-  updateRoleUI();
-</script>
-
+    });
+  </script>
 </body>
 </html>
