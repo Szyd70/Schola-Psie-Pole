@@ -156,6 +156,22 @@
     textarea.input-field { height: 120px; resize: vertical; }
     textarea#form-bulk-text { height: 260px; font-family: monospace; font-size: 0.9rem; }
 
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .checkbox-container input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
     .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 
     .cat-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; }
@@ -323,6 +339,12 @@
     <input type="text" id="form-title" class="input-field" placeholder="Tytuł utworu">
     <input type="text" id="form-category" class="input-field" placeholder="Kategoria (np. Uwielbienie, Kolędy)">
     <input type="text" id="form-audio-url" class="input-field" placeholder="Link do nagrania (YouTube / Drive / MP3)">
+    
+    <label class="checkbox-container">
+      <input type="checkbox" id="form-gesture">
+      Z pokazywaniem 🙌
+    </label>
+
     <textarea id="form-lyrics" class="input-field" placeholder="Tekst pieśni..."></textarea>
     <textarea id="form-chords" class="input-field" placeholder="Akordy (opcjonalnie)..."></textarea>
 
@@ -399,7 +421,7 @@
   let currentTransposeSteps = 0;
   let originalChords = "";
 
-  const ADMIN_PIN = "1234";
+  const ADMIN_PIN = "0410";
 
   const scaleMajor = ["C", "Cis", "D", "Dis", "E", "F", "Fis", "G", "Gis", "A", "B", "H"];
   const scaleMinor = ["c", "cis", "d", "dis", "e", "f", "fis", "g", "gis", "a", "b", "h"];
@@ -581,7 +603,7 @@
   function getUniqueCategories() {
     const cats = new Set();
     songs.forEach(s => { if (s.category) cats.add(s.category.trim()); });
-    return Array.from(cats);
+    return Array.from(cats).sort((a, b) => a.localeCompare(b, 'pl'));
   }
 
   function renderCategoryChips() {
@@ -608,10 +630,12 @@
     if(!container) return;
     container.innerHTML = '';
 
-    let filtered = songs;
+    let filtered = [...songs];
     if (activeCategory !== 'Wszystkie') {
-      filtered = songs.filter(s => (s.category || '') === activeCategory);
+      filtered = filtered.filter(s => (s.category || '') === activeCategory);
     }
+
+    filtered.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'pl'));
 
     if (filtered.length === 0) {
       container.innerHTML = '<p style="color: var(--text-sub);">Brak utworów w tej kategorii.</p>';
@@ -626,6 +650,8 @@
     if(!container) return;
     container.innerHTML = '';
     const list = songs.filter(s => repertuarIds.includes(s.id));
+
+    list.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'pl'));
 
     if (list.length === 0) {
       container.innerHTML = '<p style="color: var(--text-sub);">Repertuar jest obecnie pusty.</p>';
@@ -669,6 +695,7 @@
     div.className = 'song-item';
     const inRep = repertuarIds.includes(song.id);
     const audioIcon = (song.audioUrl && song.audioUrl.trim() !== '') ? ' 🎵' : '';
+    const gestureIcon = song.isGesture ? ' 🙌' : '';
     
     const adminToggleRepBtn = isAdmin ? `
       <button class="btn btn-secondary btn-small" onclick="toggleRepertuar('${song.id}')">
@@ -678,7 +705,7 @@
 
     div.innerHTML = `
       <button class="song-title-btn" onclick="openSong('${song.id}')">
-        ${song.title}${audioIcon} <span class="song-category">${song.category || 'Uwielbienie'}</span>
+        ${song.title}${gestureIcon}${audioIcon} <span class="song-category">${song.category || 'Uwielbienie'}</span>
       </button>
       ${adminToggleRepBtn}
     `;
@@ -697,7 +724,8 @@
     else if (!document.getElementById('view-repertuar').classList.contains('hidden')) previousView = 'view-repertuar';
     else previousView = 'view-home';
 
-    document.getElementById('view-title').innerText = song.title;
+    const gestureIcon = song.isGesture ? ' 🙌' : '';
+    document.getElementById('view-title').innerText = song.title + gestureIcon;
     document.getElementById('view-category').innerText = song.category || 'Uwielbienie';
     document.getElementById('view-lyrics').innerText = song.lyrics || '';
     
@@ -874,6 +902,7 @@
     document.getElementById('form-title').value = "";
     document.getElementById('form-category').value = "";
     document.getElementById('form-audio-url').value = "";
+    document.getElementById('form-gesture').checked = false;
     document.getElementById('form-lyrics').value = "";
     document.getElementById('form-chords').value = "";
     document.getElementById('btn-delete').classList.add('hidden');
@@ -890,6 +919,7 @@
     document.getElementById('form-title').value = song.title;
     document.getElementById('form-category').value = song.category || "";
     document.getElementById('form-audio-url').value = song.audioUrl || "";
+    document.getElementById('form-gesture').checked = !!song.isGesture;
     document.getElementById('form-lyrics').value = song.lyrics || "";
     document.getElementById('form-chords').value = song.chords || "";
     document.getElementById('btn-delete').classList.remove('hidden');
@@ -902,12 +932,13 @@
     const title = document.getElementById('form-title').value.trim();
     const category = document.getElementById('form-category').value.trim() || "Uwielbienie";
     const audioUrl = document.getElementById('form-audio-url').value.trim();
+    const isGesture = document.getElementById('form-gesture').checked;
     const lyrics = document.getElementById('form-lyrics').value.trim();
     const chords = document.getElementById('form-chords').value.trim();
 
     if (!title || !lyrics) return alert("Wypełnij tytuł oraz tekst utworu!");
 
-    const songData = { title, category, audioUrl, lyrics, chords };
+    const songData = { title, category, audioUrl, isGesture, lyrics, chords };
 
     try {
       if (id) {
@@ -972,6 +1003,7 @@
       let lyricsArr = [];
       let chordsArr = [];
       let audioUrl = "";
+      let isGesture = false;
       let currentMode = "lyrics";
 
       for (let i = 1; i < lines.length; i++) {
@@ -987,6 +1019,9 @@
         } else if (lower.startsWith("url:")) {
           audioUrl = line.replace(/^url:\s*/i, '').trim();
           continue;
+        } else if (lower.includes("pokazywanie") || lower.includes("gesty")) {
+          isGesture = true;
+          continue;
         }
 
         if (currentMode === "chords") chordsArr.push(line);
@@ -997,6 +1032,7 @@
         title,
         category,
         audioUrl,
+        isGesture,
         lyrics: lyricsArr.join('\n').trim(),
         chords: chordsArr.join('\n').trim()
       };
