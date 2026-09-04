@@ -126,6 +126,22 @@
     textarea.input-field { height: 120px; resize: vertical; }
     textarea#form-bulk-text { height: 260px; font-family: monospace; font-size: 0.9rem; }
 
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
+    .checkbox-container input {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
     .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 
     .cat-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; }
@@ -261,6 +277,12 @@
     <input type="hidden" id="form-id">
     <input type="text" id="form-title" class="input-field" placeholder="Tytuł utworu">
     <input type="text" id="form-category" class="input-field" placeholder="Kategoria (np. Uwielbienie, Kolędy)">
+    
+    <label class="checkbox-container">
+      <input type="checkbox" id="form-has-actions">
+      <span>Z pokazywaniem 🙌</span>
+    </label>
+
     <input type="text" id="form-audio-url" class="input-field" placeholder="Link do nagrania (YouTube / Drive / MP3)">
     <textarea id="form-lyrics" class="input-field" placeholder="Tekst pieśni..."></textarea>
     <textarea id="form-chords" class="input-field" placeholder="Akordy (opcjonalnie)..."></textarea>
@@ -279,6 +301,7 @@
     <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 10px;">
       Format:<br>
       "Tytuł Pieśni" [Kategoria]<br>
+      # Pokazywanie: tak<br>
       # Tekst<br>Linia tekstu...<br>
       # Akordy<br>Linia akordów...<br>
       URL: https://...
@@ -558,6 +581,7 @@
     div.className = 'song-item';
     const inRep = repertuarIds.includes(song.id);
     const audioIcon = (song.audioUrl && song.audioUrl.trim() !== '') ? ' 🎵' : '';
+    const actionsIcon = song.hasActions ? ' 🙌' : '';
     
     const adminToggleRepBtn = isAdmin ? `
       <button class="btn btn-secondary btn-small" onclick="toggleRepertuar('${song.id}')">
@@ -567,7 +591,7 @@
 
     div.innerHTML = `
       <button class="song-title-btn" onclick="openSong('${song.id}')">
-        ${song.title}${audioIcon} <span class="song-category">${song.category || 'Uwielbienie'}</span>
+        ${song.title}${actionsIcon}${audioIcon} <span class="song-category">${song.category || 'Uwielbienie'}</span>
       </button>
       ${adminToggleRepBtn}
     `;
@@ -586,7 +610,8 @@
     else if (!document.getElementById('view-repertuar').classList.contains('hidden')) previousView = 'view-repertuar';
     else previousView = 'view-home';
 
-    document.getElementById('view-title').innerText = song.title;
+    const titleWithActions = song.title + (song.hasActions ? ' 🙌' : '');
+    document.getElementById('view-title').innerText = titleWithActions;
     document.getElementById('view-category').innerText = song.category || 'Uwielbienie';
     document.getElementById('view-lyrics').innerText = song.lyrics || '';
     
@@ -757,13 +782,13 @@
     });
   };
 
-  // EXPOSED ADMIN & FORM FUNCTIONS (Wcześniej brakujące w globalnym obiekcie window)
   window.openAddForm = function() {
     if (!isAdmin) return;
     document.getElementById('form-header').innerText = "Dodaj Utwór";
     document.getElementById('form-id').value = "";
     document.getElementById('form-title').value = "";
     document.getElementById('form-category').value = "";
+    document.getElementById('form-has-actions').checked = false;
     document.getElementById('form-audio-url').value = "";
     document.getElementById('form-lyrics').value = "";
     document.getElementById('form-chords').value = "";
@@ -780,6 +805,7 @@
     document.getElementById('form-id').value = song.id;
     document.getElementById('form-title').value = song.title;
     document.getElementById('form-category').value = song.category || "";
+    document.getElementById('form-has-actions').checked = !!song.hasActions;
     document.getElementById('form-audio-url').value = song.audioUrl || "";
     document.getElementById('form-lyrics').value = song.lyrics || "";
     document.getElementById('form-chords').value = song.chords || "";
@@ -792,13 +818,14 @@
     const id = document.getElementById('form-id').value;
     const title = document.getElementById('form-title').value.trim();
     const category = document.getElementById('form-category').value.trim() || "Uwielbienie";
+    const hasActions = document.getElementById('form-has-actions').checked;
     const audioUrl = document.getElementById('form-audio-url').value.trim();
     const lyrics = document.getElementById('form-lyrics').value.trim();
     const chords = document.getElementById('form-chords').value.trim();
 
     if (!title || !lyrics) return alert("Wypełnij tytuł oraz tekst utworu!");
 
-    const songData = { title, category, audioUrl, lyrics, chords };
+    const songData = { title, category, hasActions, audioUrl, lyrics, chords };
 
     try {
       if (id) {
@@ -849,6 +876,7 @@
       
       let title = "Bez tytułu";
       let category = "Uwielbienie";
+      let hasActions = false;
       
       const titleMatch = firstLine.match(/"([^"]+)"/);
       if (titleMatch) {
@@ -875,6 +903,11 @@
         } else if (lower.startsWith("# tekst")) {
           currentMode = "lyrics";
           continue;
+        } else if (lower.startsWith("# pokazywanie") || lower.startsWith("pokazywanie:")) {
+          if (lower.includes("tak") || lower.includes("true") || lower.includes("1")) {
+            hasActions = true;
+          }
+          continue;
         } else if (lower.startsWith("url:")) {
           audioUrl = line.replace(/^url:\s*/i, '').trim();
           continue;
@@ -887,6 +920,7 @@
       const newSongData = {
         title,
         category,
+        hasActions,
         audioUrl,
         lyrics: lyricsArr.join('\n').trim(),
         chords: chordsArr.join('\n').trim()
