@@ -332,9 +332,9 @@
       </label>
       <div class="roles-palette">
         <div class="role-badge" draggable="true" ondragstart="handleDragStart(event, 'Wejście')">🏷️ Wejście</div>
-        <div class="role-badge" draggable="true" ondragstart="handleDragStart(event, 'Przygotowanie Darów')">🏷️ Przygotowanie Darów</div>
+        <div class="role-badge" draggable="true" ondragstart="handleDragStart(event, 'Ofiarowanie')">🏷️ Ofiarowanie</div>
         <div class="role-badge" draggable="true" ondragstart="handleDragStart(event, 'Komunia')">🏷️ Komunia</div>
-        <div class="role-badge" draggable="true" ondragstart="handleDragStart(event, 'Dziękczynienie')">🏷️ Dziękczynienie</div>
+        <div class="role-badge" draggable="true" ondragstart="handleDragStart(event, 'Uwielbienie')">🏷️ Uwielbienie</div>
         <div class="role-badge" draggable="true" ondragstart="handleDragStart(event, 'Zakończenie')">🏷️ Zakończenie</div>
       </div>
     </div>
@@ -485,6 +485,15 @@
   let originalChords = "";
 
   const ADMIN_PIN = "0410";
+
+  // KOLEJNOŚĆ LITURGICZNA RÓL
+  const ROLE_ORDER = {
+    "Wejście": 1,
+    "Przygotowanie Darów": 2,
+    "Komunia": 3,
+    "Dziękczynienie": 4,
+    "Zakończenie": 5
+  };
 
   const scaleMajor = ["C", "Cis", "D", "Dis", "E", "F", "Fis", "G", "Gis", "A", "B", "H"];
   const scaleMinor = ["c", "cis", "d", "dis", "e", "f", "fis", "g", "gis", "a", "b", "h"];
@@ -716,7 +725,19 @@
     container.innerHTML = '';
     const list = songs.filter(s => repertuarIds.includes(s.id));
 
-    list.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'pl'));
+    // SORTOWANIE WG KOLEJNOŚCI LITURGICZNEJ (ROLE_ORDER), A NASTĘPNIE ALFABETYCZNIE
+    list.sort((a, b) => {
+      const roleA = repertuarRoles[a.id];
+      const roleB = repertuarRoles[b.id];
+      
+      const orderA = ROLE_ORDER[roleA] || 99;
+      const orderB = ROLE_ORDER[roleB] || 99;
+
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      return (a.title || '').localeCompare(b.title || '', 'pl');
+    });
 
     if (list.length === 0) {
       container.innerHTML = '<p style="color: var(--text-sub);">Repertuar jest obecnie pusty.</p>';
