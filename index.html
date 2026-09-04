@@ -99,6 +99,8 @@
       justify-content: space-between;
       align-items: center;
       box-shadow: var(--shadow);
+      flex-wrap: wrap;
+      gap: 8px;
     }
     .song-title-btn {
       background: none; border: none; color: var(--text);
@@ -115,14 +117,31 @@
       border-radius: 8px;
       font-weight: 600;
     }
+    .role-badge {
+      font-size: 0.75rem;
+      color: #ffffff;
+      background-color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-weight: 700;
+      margin-left: 6px;
+    }
 
-    .input-field {
+    .input-field, .select-field {
       width: 100%; padding: 14px; margin-bottom: 12px;
       background-color: var(--card-bg); border: 2px solid var(--border);
       color: var(--text); border-radius: 14px; font-size: 1rem;
       outline: none;
     }
-    .input-field:focus { border-color: var(--primary); }
+    .select-field {
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      border-radius: 10px;
+      width: auto;
+      margin-bottom: 0;
+      font-weight: 600;
+    }
+    .input-field:focus, .select-field:focus { border-color: var(--primary); }
     textarea.input-field { height: 120px; resize: vertical; }
     textarea#form-bulk-text { height: 260px; font-family: monospace; font-size: 0.9rem; }
 
@@ -315,7 +334,7 @@
 <!-- LOGIKA APLIKACJI I FIREBASE -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBXxeXd2K2HGzK8NmPUtlhqttRVYdbDSkE",
@@ -338,6 +357,7 @@
   let songs = [];
   let archives = [];
   let repertuarIds = [];
+  let repertuarRoles = {}; // Mapowanie: songId -> rola (np. "Wejście")
 
   let isAdmin = false;
   let activeCategory = 'Wszystkie';
@@ -348,7 +368,8 @@
   let currentTransposeSteps = 0;
   let originalChords = "";
 
-  const ADMIN_PIN = "1234";
+  const ADMIN_PIN = "0410";
+  const LITURGICAL_ROLES = ["Wejście", "Ofiarowanie", "Komunia", "Uwielbienie", "Zakończenie"];
 
   const scaleMajor = ["C", "Cis", "D", "Dis", "E", "F", "Fis", "G", "Gis", "A", "B", "H"];
   const scaleMinor = ["c", "cis", "d", "dis", "e", "f", "fis", "g", "gis", "a", "b", "h"];
@@ -382,7 +403,7 @@
     document.getElementById('pwa-install-btn').addEventListener('click', async () => {
       if (deferredPrompt) {
         deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
+        await deferredPrompt.userChoice;
         deferredPrompt = null;
         banner.remove();
       } else {
@@ -458,9 +479,12 @@
 
     onSnapshot(doc(db, "repertuar", "current"), (docSnap) => {
       if (docSnap.exists()) {
-        repertuarIds = docSnap.data().songIds || [];
+        const data = docSnap.data();
+        repertuarIds = data.songIds || [];
+        repertuarRoles = data.roles || {};
       } else {
         repertuarIds = [];
+        repertuarRoles = {};
       }
       renderRepertuar();
       renderSongsList();
@@ -493,7 +517,8 @@
   function getUniqueCategories() {
     const cats = new Set();
     songs.forEach(s => { if (s.category) cats.add(s.category.trim()); });
-    return Array.from(cats);
+    // Sortowanie alfabetyczne kategorii
+    return Array.from(cats).sort((a, b) => a.localeCompare(b, 'pl'));
   }
 
   function renderCategoryChips() {
@@ -520,17 +545,19 @@
     if(!container) return;
     container.innerHTML = '';
 
-    let filtered = songs;
+    // Sortowanie alfabetyczne listy wszystkich pieśni
+    let sortedSongs = [...songs].sort((a, b) => (a.title || '').localeCompare(b.title || '', 'pl'));
+
     if (activeCategory !== 'Wszystkie') {
-      filtered = songs.filter(s => (s.category || '') === activeCategory);
+      sortedSongs = sortedSongs.filter(s => (s.category || '') === activeCategory);
     }
 
-    if (filtered.length === 0) {
+    if (sortedSongs.length === 0) {
       container.innerHTML = '<p style="color: var(--text-sub);">Brak utworów w tej kategorii.</p>';
       return;
     }
 
-    filtered.forEach(song => container.appendChild(createSongRow(song)));
+    sortedSongs.forEach(song => container.appendChild(createSongRow(song, false)));
   }
 
   function renderRepertuar() {
@@ -544,7 +571,7 @@
       return;
     }
 
-    list.forEach(song => container.appendChild(createSongRow(song)));
+    list.forEach(song => container.appendChild(createSongRow(song, true)));
   }
 
   function renderArchives() {
@@ -576,27 +603,66 @@
     });
   }
 
-  function createSongRow(song) {
+  function createSongRow(song, isRepertuarView = false) {
     const div = document.createElement('div');
     div.className = 'song-item';
     const inRep = repertuarIds.includes(song.id);
     const audioIcon = (song.audioUrl && song.audioUrl.trim() !== '') ? ' 🎵' : '';
     const actionsIcon = song.hasActions ? ' 🙌' : '';
     
-    const adminToggleRepBtn = isAdmin ? `
-      <button class="btn btn-secondary btn-small" onclick="toggleRepertuar('${song.id}')">
-        ${inRep ? '➖' : '➕'}
-      </button>
-    ` : '';
+    const role = repertuarRoles[song.id] || '';
+    const roleBadge = (isRepertuarView && role) ? `<span class="role-badge">${role}</span>` : '';
+
+    let adminControls = '';
+    if (isAdmin && isRepertuarView) {
+      const optionsHTML = ['<option value="">-- Rola --</option>', ...LITURGICAL_ROLES.map(r => 
+        `<option value="${r}" ${role === r ? 'selected' : ''}>${r}</option>`
+      )].join('');
+
+      adminControls = `
+        <div style="display: flex; gap: 6px; align-items: center; margin-top: 6px; width: 100%; justify-content: flex-end;">
+          <select class="select-field" onchange="setSongRole('${song.id}', this.value)">
+            ${optionsHTML}
+          </select>
+          <button class="btn btn-secondary btn-small" onclick="toggleRepertuar('${song.id}')">➖ Usunąć</button>
+        </div>
+      `;
+    } else if (isAdmin && !isRepertuarView) {
+      adminControls = `
+        <button class="btn btn-secondary btn-small" onclick="toggleRepertuar('${song.id}')">
+          ${inRep ? '➖' : '➕'}
+        </button>
+      `;
+    }
 
     div.innerHTML = `
       <button class="song-title-btn" onclick="openSong('${song.id}')">
-        ${song.title}${actionsIcon}${audioIcon} <span class="song-category">${song.category || 'Uwielbienie'}</span>
+        ${song.title}${actionsIcon}${audioIcon}${roleBadge} <span class="song-category">${song.category || 'Uwielbienie'}</span>
       </button>
-      ${adminToggleRepBtn}
+      ${adminControls}
     `;
     return div;
   }
+
+  window.setSongRole = async function(songId, newRole) {
+    if (!isAdmin) return;
+    if (newRole) {
+      repertuarRoles[songId] = newRole;
+    } else {
+      delete repertuarRoles[songId];
+    }
+
+    if (db) {
+      try {
+        await setDoc(doc(db, "repertuar", "current"), { 
+          songIds: repertuarIds,
+          roles: repertuarRoles 
+        });
+      } catch (e) {
+        console.error("Błąd zapisu roli liturgicznej:", e);
+      }
+    }
+  };
 
   window.openSong = function(id) {
     const song = songs.find(s => s.id === id);
@@ -718,13 +784,17 @@
     if (!isAdmin) return;
     if (repertuarIds.includes(id)) {
       repertuarIds = repertuarIds.filter(i => i !== id);
+      delete repertuarRoles[id];
     } else {
       repertuarIds.push(id);
     }
     
     if (db) {
       try {
-        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds });
+        await setDoc(doc(db, "repertuar", "current"), { 
+          songIds: repertuarIds,
+          roles: repertuarRoles
+        });
       } catch (e) {
         console.error("Błąd zapisu repertuaru:", e);
       }
@@ -739,7 +809,12 @@
 
     if (db) {
       try {
-        await addDoc(collection(db, "archives"), { name, songIds: [...repertuarIds], createdAt: new Date() });
+        await addDoc(collection(db, "archives"), { 
+          name, 
+          songIds: [...repertuarIds], 
+          roles: { ...repertuarRoles },
+          createdAt: new Date() 
+        });
         input.value = '';
         alert("Zapisano zestaw w chmurze!");
       } catch (e) {
@@ -752,10 +827,14 @@
     const arch = archives.find(a => a.id === id);
     if (!arch) return;
     repertuarIds = [...(arch.songIds || [])];
+    repertuarRoles = { ...(arch.roles || {}) };
 
     if (db && isAdmin) {
       try {
-        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds });
+        await setDoc(doc(db, "repertuar", "current"), { 
+          songIds: repertuarIds,
+          roles: repertuarRoles
+        });
       } catch (e) {
         console.error("Błąd ładowania archiwum:", e);
       }
