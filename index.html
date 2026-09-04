@@ -517,7 +517,6 @@
   function getUniqueCategories() {
     const cats = new Set();
     songs.forEach(s => { if (s.category) cats.add(s.category.trim()); });
-    // Sortowanie alfabetyczne kategorii
     return Array.from(cats).sort((a, b) => a.localeCompare(b, 'pl'));
   }
 
@@ -545,7 +544,6 @@
     if(!container) return;
     container.innerHTML = '';
 
-    // Sortowanie alfabetyczne listy wszystkich pieśni
     let sortedSongs = [...songs].sort((a, b) => (a.title || '').localeCompare(b.title || '', 'pl'));
 
     if (activeCategory !== 'Wszystkie') {
@@ -564,12 +562,30 @@
     const container = document.getElementById('repertuar-list');
     if(!container) return;
     container.innerHTML = '';
-    const list = songs.filter(s => repertuarIds.includes(s.id));
+    let list = songs.filter(s => repertuarIds.includes(s.id));
 
     if (list.length === 0) {
       container.innerHTML = '<p style="color: var(--text-sub);">Repertuar jest obecnie pusty.</p>';
       return;
     }
+
+    // Sortowanie według kolejności liturgicznej: Wejście -> Ofiarowanie -> Komunia -> Uwielbienie -> Zakończenie -> Inne
+    list.sort((a, b) => {
+      const roleA = repertuarRoles[a.id] || '';
+      const roleB = repertuarRoles[b.id] || '';
+
+      const indexA = LITURGICAL_ROLES.indexOf(roleA);
+      const indexB = LITURGICAL_ROLES.indexOf(roleB);
+
+      const orderA = indexA !== -1 ? indexA : 99;
+      const orderB = indexB !== -1 ? indexB : 99;
+
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+
+      return (a.title || '').localeCompare(b.title || '', 'pl');
+    });
 
     list.forEach(song => container.appendChild(createSongRow(song, true)));
   }
