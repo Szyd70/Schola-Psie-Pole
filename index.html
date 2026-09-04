@@ -52,43 +52,13 @@
 
     .banner-container {
       width: 100%;
-      height: 180px;
+      height: 200px;
       border-radius: 20px;
       overflow: hidden;
-      margin-bottom: 15px;
+      margin-bottom: 20px;
       display: flex;
       justify-content: center;
       align-items: center;
-    }
-
-    /* OGŁOSZENIA */
-    .announcements-card {
-      background: var(--card-bg);
-      border: 2px solid var(--accent-yellow);
-      border-radius: 16px;
-      padding: 14px;
-      margin-bottom: 15px;
-      box-shadow: var(--shadow);
-    }
-    .announcements-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-    }
-    .announcements-title {
-      font-weight: 800;
-      color: var(--text);
-      font-size: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .announcements-content {
-      font-size: 0.95rem;
-      line-height: 1.4;
-      white-space: pre-wrap;
-      color: var(--text);
     }
 
     .btn {
@@ -156,22 +126,6 @@
     textarea.input-field { height: 120px; resize: vertical; }
     textarea#form-bulk-text { height: 260px; font-family: monospace; font-size: 0.9rem; }
 
-    .checkbox-container {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 12px;
-      font-weight: 700;
-      color: var(--text);
-      cursor: pointer;
-    }
-    .checkbox-container input[type="checkbox"] {
-      width: 20px;
-      height: 20px;
-      accent-color: var(--primary);
-      cursor: pointer;
-    }
-
     .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 
     .cat-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; }
@@ -199,21 +153,6 @@
       margin-bottom: 8px;
     }
     .controls-panel { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
-
-    .repertuar-header-box {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 12px 16px;
-      margin-bottom: 15px;
-      text-align: center;
-      box-shadow: var(--shadow);
-    }
-    .repertuar-header-title {
-      font-size: 1.15rem;
-      font-weight: 800;
-      color: var(--primary);
-    }
   </style>
 </head>
 <body>
@@ -233,15 +172,6 @@
   <div id="view-home">
     <div class="banner-container">
       <img src="1787475381723.png" alt="Logo Scholi" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;">
-    </div>
-
-    <!-- OGŁOSZENIA -->
-    <div class="announcements-card" id="announcements-card">
-      <div class="announcements-header">
-        <span class="announcements-title">📢 Ogłoszenia</span>
-        <button class="btn btn-secondary btn-small admin-only hidden" onclick="openAnnouncementsForm()">✏️ Edytuj</button>
-      </div>
-      <div class="announcements-content" id="announcements-display">Brak aktualnych ogłoszeń.</div>
     </div>
 
     <button class="btn btn-filled" onclick="showView('view-songs')">📖 Przeglądaj Śpiewnik</button>
@@ -275,16 +205,9 @@
       <div></div>
     </div>
     
-    <!-- Tytuł Repertuaru -->
-    <div class="repertuar-header-box">
-      <div class="repertuar-header-title" id="repertuar-title-display">Brak ustawionego tytułu</div>
-    </div>
-
-    <div class="admin-only hidden" style="margin-bottom: 15px; background: var(--card-bg); padding: 12px; border-radius: 14px; border: 1px dashed var(--primary);">
-      <label style="font-size: 0.85rem; font-weight: bold; color: var(--text-sub); display: block; margin-bottom: 6px;">Ustawienia Repertuaru (Admin):</label>
-      <input type="text" id="repertuar-title-input" class="input-field" placeholder="Tytuł zestawu (np. Niedziela 24.05)" style="margin-bottom: 8px;">
-      <button class="btn btn-filled btn-small" style="width: 100%; margin-bottom: 8px;" onclick="saveRepertuarTitle()">✏️ Zapisz Tytuł Repertuaru</button>
-      <button class="btn btn-secondary btn-small" style="width: 100%;" onclick="saveRepertuarToArchive()">💾 Zapisz cały zestaw do Archiwum</button>
+    <div class="admin-only hidden" style="margin-bottom: 15px;">
+      <input type="text" id="archive-name-input" class="input-field" placeholder="Nazwa zestawu (np. Niedziela 15.10)">
+      <button class="btn btn-filled btn-small" style="width: 100%;" onclick="saveRepertuarToArchive()">💾 Zapisz do Archiwum w Chmurze</button>
     </div>
 
     <div id="repertuar-list"></div>
@@ -327,7 +250,7 @@
     <div id="view-lyrics" class="song-lyrics"></div>
   </div>
 
-  <!-- WIDOK: FORMULARZ DODAWANIA / EDYCJI UTWORU -->
+  <!-- WIDOK: FORMULARZ DODAWANIA / EDYCJI -->
   <div id="view-form" class="hidden">
     <div class="nav-bar">
       <button class="btn btn-secondary btn-small" onclick="showView('view-songs')">Anuluj</button>
@@ -339,28 +262,11 @@
     <input type="text" id="form-title" class="input-field" placeholder="Tytuł utworu">
     <input type="text" id="form-category" class="input-field" placeholder="Kategoria (np. Uwielbienie, Kolędy)">
     <input type="text" id="form-audio-url" class="input-field" placeholder="Link do nagrania (YouTube / Drive / MP3)">
-    
-    <label class="checkbox-container">
-      <input type="checkbox" id="form-gesture">
-      Z pokazywaniem 🙌
-    </label>
-
     <textarea id="form-lyrics" class="input-field" placeholder="Tekst pieśni..."></textarea>
     <textarea id="form-chords" class="input-field" placeholder="Akordy (opcjonalnie)..."></textarea>
 
     <button class="btn btn-filled" onclick="saveSong()">💾 Zapisz w chmurze</button>
     <button id="btn-delete" class="btn btn-danger hidden" onclick="deleteCurrentSong()">🗑️ Usuń utwór</button>
-  </div>
-
-  <!-- WIDOK: EDYCJA OGŁOSZEŃ -->
-  <div id="view-announcements-form" class="hidden">
-    <div class="nav-bar">
-      <button class="btn btn-secondary btn-small" onclick="showView('view-home')">Anuluj</button>
-      <h2>Edytuj Ogłoszenia</h2>
-      <div></div>
-    </div>
-    <textarea id="form-announcements-text" class="input-field" style="height: 200px;" placeholder="Wpisz treść bieżących ogłoszeń..."></textarea>
-    <button class="btn btn-filled" onclick="saveAnnouncements()">💾 Zapisz Ogłoszenia</button>
   </div>
 
   <!-- WIDOK: MASOWE DODAWANIE -->
@@ -409,8 +315,6 @@
   let songs = [];
   let archives = [];
   let repertuarIds = [];
-  let repertuarTitle = "Niedzielny Repertuar";
-  let announcementsText = "";
 
   let isAdmin = false;
   let activeCategory = 'Wszystkie';
@@ -421,10 +325,49 @@
   let currentTransposeSteps = 0;
   let originalChords = "";
 
-  const ADMIN_PIN = "0410";
+  const ADMIN_PIN = "1234";
 
+  // Dwa zestawy skal (duże i małe litery)
   const scaleMajor = ["C", "Cis", "D", "Dis", "E", "F", "Fis", "G", "Gis", "A", "B", "H"];
   const scaleMinor = ["c", "cis", "d", "dis", "e", "f", "fis", "g", "gis", "a", "b", "h"];
+
+  // Rejestracja PWA
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('install')) {
+      showInstallBanner();
+    }
+  });
+
+  function showInstallBanner() {
+    const banner = document.createElement('div');
+    banner.id = 'pwa-install-banner';
+    banner.innerHTML = `
+      <div style="position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-bg); border-top: 2px solid var(--primary); padding: 20px; box-shadow: 0 -5px 25px rgba(0,0,0,0.2); text-align: center; z-index: 9999;">
+        <h3 style="color: var(--primary); margin-bottom: 8px;">Zainstaluj aplikację Scholi</h3>
+        <p style="font-size: 0.9rem; color: var(--text-sub); margin-bottom: 15px;">Zainstaluj aplikację na telefonie, aby mieć do niej szybki dostęp bez przeglądarki.</p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+          <button id="pwa-install-btn" class="btn btn-filled" style="width: auto; padding: 10px 20px;">📲 Zainstaluj teraz</button>
+          <button onclick="document.getElementById('pwa-install-banner').remove()" class="btn btn-secondary" style="width: auto; padding: 10px 15px;">Później</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(banner);
+
+    document.getElementById('pwa-install-btn').addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        banner.remove();
+      } else {
+        alert("Aby zainstalować aplikację na iOS (Safari), kliknij przycisk 'Udostępnij' i wybierz 'Do ekranu początkowego'.");
+      }
+    });
+  }
 
   // Motyw
   const savedTheme = localStorage.getItem('schola_theme') || 'light';
@@ -477,11 +420,10 @@
     renderAll();
   }
 
-  // Synch Firebase
+  // Synch z Firebase (Songbook & Repertuar & Archiwum)
   function initFirebaseSync() {
     if (!db) return;
 
-    // Pieśni
     onSnapshot(collection(db, "songs"), (snapshot) => {
       const fetched = [];
       snapshot.forEach((docSnap) => {
@@ -491,32 +433,16 @@
       renderAll();
     });
 
-    // Repertuar
     onSnapshot(doc(db, "repertuar", "current"), (docSnap) => {
       if (docSnap.exists()) {
-        const data = docSnap.data();
-        repertuarIds = data.songIds || [];
-        repertuarTitle = data.title || "Bieżący Repertuar";
+        repertuarIds = docSnap.data().songIds || [];
       } else {
         repertuarIds = [];
-        repertuarTitle = "Bieżący Repertuar";
       }
-      renderRepertuarHeader();
       renderRepertuar();
       renderSongsList();
     });
 
-    // Ogłoszenia
-    onSnapshot(doc(db, "settings", "announcements"), (docSnap) => {
-      if (docSnap.exists()) {
-        announcementsText = docSnap.data().text || "";
-      } else {
-        announcementsText = "";
-      }
-      renderAnnouncements();
-    });
-
-    // Archiwum
     onSnapshot(collection(db, "archives"), (snapshot) => {
       const fetchedArch = [];
       snapshot.forEach((docSnap) => {
@@ -535,75 +461,16 @@
   };
 
   function renderAll() {
-    renderAnnouncements();
-    renderRepertuarHeader();
     renderCategoryChips();
     renderSongsList();
     renderRepertuar();
     renderArchives();
   }
 
-  function renderAnnouncements() {
-    const display = document.getElementById('announcements-display');
-    const card = document.getElementById('announcements-card');
-    if (!display || !card) return;
-
-    if (announcementsText.trim() === '') {
-      display.innerText = "Brak aktualnych ogłoszeń.";
-      display.style.color = "var(--text-sub)";
-    } else {
-      display.innerText = announcementsText;
-      display.style.color = "var(--text)";
-    }
-  }
-
-  window.openAnnouncementsForm = function() {
-    if (!isAdmin) return;
-    document.getElementById('form-announcements-text').value = announcementsText;
-    showView('view-announcements-form');
-  };
-
-  window.saveAnnouncements = async function() {
-    if (!isAdmin) return;
-    const text = document.getElementById('form-announcements-text').value;
-    if (db) {
-      try {
-        await setDoc(doc(db, "settings", "announcements"), { text });
-        showView('view-home');
-      } catch (e) {
-        console.error("Błąd zapisu ogłoszeń:", e);
-      }
-    }
-  };
-
-  function renderRepertuarHeader() {
-    const titleDisplay = document.getElementById('repertuar-title-display');
-    const titleInput = document.getElementById('repertuar-title-input');
-    if (titleDisplay) titleDisplay.innerText = repertuarTitle;
-    if (titleInput && !document.activeElement.isSameNode(titleInput)) {
-      titleInput.value = repertuarTitle;
-    }
-  }
-
-  window.saveRepertuarTitle = async function() {
-    if (!isAdmin) return;
-    const input = document.getElementById('repertuar-title-input');
-    const newTitle = input.value.trim() || "Bieżący Repertuar";
-    
-    if (db) {
-      try {
-        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds, title: newTitle });
-        alert("Zapisano tytuł repertuaru!");
-      } catch (e) {
-        console.error("Błąd zapisu tytułu:", e);
-      }
-    }
-  };
-
   function getUniqueCategories() {
     const cats = new Set();
     songs.forEach(s => { if (s.category) cats.add(s.category.trim()); });
-    return Array.from(cats).sort((a, b) => a.localeCompare(b, 'pl'));
+    return Array.from(cats);
   }
 
   function renderCategoryChips() {
@@ -630,12 +497,10 @@
     if(!container) return;
     container.innerHTML = '';
 
-    let filtered = [...songs];
+    let filtered = songs;
     if (activeCategory !== 'Wszystkie') {
-      filtered = filtered.filter(s => (s.category || '') === activeCategory);
+      filtered = songs.filter(s => (s.category || '') === activeCategory);
     }
-
-    filtered.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'pl'));
 
     if (filtered.length === 0) {
       container.innerHTML = '<p style="color: var(--text-sub);">Brak utworów w tej kategorii.</p>';
@@ -650,8 +515,6 @@
     if(!container) return;
     container.innerHTML = '';
     const list = songs.filter(s => repertuarIds.includes(s.id));
-
-    list.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'pl'));
 
     if (list.length === 0) {
       container.innerHTML = '<p style="color: var(--text-sub);">Repertuar jest obecnie pusty.</p>';
@@ -695,7 +558,6 @@
     div.className = 'song-item';
     const inRep = repertuarIds.includes(song.id);
     const audioIcon = (song.audioUrl && song.audioUrl.trim() !== '') ? ' 🎵' : '';
-    const gestureIcon = song.isGesture ? ' 🙌' : '';
     
     const adminToggleRepBtn = isAdmin ? `
       <button class="btn btn-secondary btn-small" onclick="toggleRepertuar('${song.id}')">
@@ -705,7 +567,7 @@
 
     div.innerHTML = `
       <button class="song-title-btn" onclick="openSong('${song.id}')">
-        ${song.title}${gestureIcon}${audioIcon} <span class="song-category">${song.category || 'Uwielbienie'}</span>
+        ${song.title}${audioIcon} <span class="song-category">${song.category || 'Uwielbienie'}</span>
       </button>
       ${adminToggleRepBtn}
     `;
@@ -724,8 +586,7 @@
     else if (!document.getElementById('view-repertuar').classList.contains('hidden')) previousView = 'view-repertuar';
     else previousView = 'view-home';
 
-    const gestureIcon = song.isGesture ? ' 🙌' : '';
-    document.getElementById('view-title').innerText = song.title + gestureIcon;
+    document.getElementById('view-title').innerText = song.title;
     document.getElementById('view-category').innerText = song.category || 'Uwielbienie';
     document.getElementById('view-lyrics').innerText = song.lyrics || '';
     
@@ -763,10 +624,12 @@
     chordsEl.innerHTML = capoBadge + transposed;
   }
 
+  // Transpozycja z obsługą dużej i małej notacji polsko-niemieckiej (C/c, Cis/cis, B/b, H/h)
   function transposeChordsPL(chordsText, steps) {
     if (steps === 0) return chordsText;
 
     return chordsText.replace(/\b([A-Ga-g][is]*|[BHbh])(maj7|7|sus4|add9|dim)?\b/g, (match, root, suffix) => {
+      // Szukanie w tonacji dużej
       let idxMajor = scaleMajor.indexOf(root);
       if (idxMajor !== -1) {
         let newIdx = (idxMajor + steps) % 12;
@@ -774,6 +637,7 @@
         return scaleMajor[newIdx] + (suffix || '');
       }
 
+      // Szukanie w tonacji małej
       let idxMinor = scaleMinor.indexOf(root);
       if (idxMinor !== -1) {
         let newIdx = (idxMinor + steps) % 12;
@@ -838,7 +702,7 @@
     
     if (db) {
       try {
-        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds, title: repertuarTitle });
+        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds });
       } catch (e) {
         console.error("Błąd zapisu repertuaru:", e);
       }
@@ -847,13 +711,15 @@
 
   window.saveRepertuarToArchive = async function() {
     if (!isAdmin) return;
-    const name = repertuarTitle || "Archiwalny Repertuar";
-    if (repertuarIds.length === 0) return alert("Repertuar jest pusty!");
+    const input = document.getElementById('archive-name-input');
+    const name = input.value.trim();
+    if (!name || repertuarIds.length === 0) return alert("Wpisz nazwę zestawu i upewnij się, że repertuar nie jest pusty!");
 
     if (db) {
       try {
         await addDoc(collection(db, "archives"), { name, songIds: [...repertuarIds], createdAt: new Date() });
-        alert(`Zapisano zestaw "${name}" w chmurze!`);
+        input.value = '';
+        alert("Zapisano zestaw w chmurze!");
       } catch (e) {
         console.error("Błąd zapisu archiwum:", e);
       }
@@ -864,11 +730,10 @@
     const arch = archives.find(a => a.id === id);
     if (!arch) return;
     repertuarIds = [...(arch.songIds || [])];
-    repertuarTitle = arch.name || "Repertuar z Archiwum";
 
     if (db && isAdmin) {
       try {
-        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds, title: repertuarTitle });
+        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds });
       } catch (e) {
         console.error("Błąd ładowania archiwum:", e);
       }
@@ -902,7 +767,6 @@
     document.getElementById('form-title').value = "";
     document.getElementById('form-category').value = "";
     document.getElementById('form-audio-url').value = "";
-    document.getElementById('form-gesture').checked = false;
     document.getElementById('form-lyrics').value = "";
     document.getElementById('form-chords').value = "";
     document.getElementById('btn-delete').classList.add('hidden');
@@ -919,7 +783,6 @@
     document.getElementById('form-title').value = song.title;
     document.getElementById('form-category').value = song.category || "";
     document.getElementById('form-audio-url').value = song.audioUrl || "";
-    document.getElementById('form-gesture').checked = !!song.isGesture;
     document.getElementById('form-lyrics').value = song.lyrics || "";
     document.getElementById('form-chords').value = song.chords || "";
     document.getElementById('btn-delete').classList.remove('hidden');
@@ -932,13 +795,12 @@
     const title = document.getElementById('form-title').value.trim();
     const category = document.getElementById('form-category').value.trim() || "Uwielbienie";
     const audioUrl = document.getElementById('form-audio-url').value.trim();
-    const isGesture = document.getElementById('form-gesture').checked;
     const lyrics = document.getElementById('form-lyrics').value.trim();
     const chords = document.getElementById('form-chords').value.trim();
 
     if (!title || !lyrics) return alert("Wypełnij tytuł oraz tekst utworu!");
 
-    const songData = { title, category, audioUrl, isGesture, lyrics, chords };
+    const songData = { title, category, audioUrl, lyrics, chords };
 
     try {
       if (id) {
@@ -1003,7 +865,6 @@
       let lyricsArr = [];
       let chordsArr = [];
       let audioUrl = "";
-      let isGesture = false;
       let currentMode = "lyrics";
 
       for (let i = 1; i < lines.length; i++) {
@@ -1019,9 +880,6 @@
         } else if (lower.startsWith("url:")) {
           audioUrl = line.replace(/^url:\s*/i, '').trim();
           continue;
-        } else if (lower.includes("pokazywanie") || lower.includes("gesty")) {
-          isGesture = true;
-          continue;
         }
 
         if (currentMode === "chords") chordsArr.push(line);
@@ -1032,7 +890,6 @@
         title,
         category,
         audioUrl,
-        isGesture,
         lyrics: lyricsArr.join('\n').trim(),
         chords: chordsArr.join('\n').trim()
       };
