@@ -26,8 +26,6 @@
       --border: #e9ecef;
       --chords-bg: #f1f9ff;
       --shadow: 0 8px 20px rgba(17, 138, 178, 0.08);
-      --role-bg: #e2f1f8;
-      --role-text: #0a5872;
     }
 
     [data-theme="dark"] {
@@ -42,8 +40,6 @@
       --border: #343d52;
       --chords-bg: #1c2333;
       --shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-      --role-bg: #1f3a4b;
-      --role-text: #70d6ff;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Nunito', system-ui, -apple-system, sans-serif; }
@@ -133,11 +129,6 @@
       justify-content: space-between;
       align-items: center;
       box-shadow: var(--shadow);
-      transition: border-color 0.2s, background-color 0.2s;
-    }
-    .song-item.drag-over {
-      border: 2px dashed var(--primary);
-      background-color: var(--chords-bg);
     }
     .song-title-btn {
       background: none; border: none; color: var(--text);
@@ -153,17 +144,6 @@
       padding: 2px 8px;
       border-radius: 8px;
       font-weight: 600;
-    }
-    .song-role {
-      font-size: 0.75rem;
-      color: var(--role-text);
-      background: var(--role-bg);
-      padding: 2px 8px;
-      border-radius: 8px;
-      font-weight: 800;
-      display: inline-block;
-      margin-top: 4px;
-      margin-right: 4px;
     }
 
     .input-field {
@@ -201,31 +181,6 @@
       box-shadow: var(--shadow);
     }
     .cat-chip.active { background: var(--primary); color: #ffffff; border-color: var(--primary); }
-
-    /* ROLOWANIE / PRZECIĄGANIE */
-    .roles-palette {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 12px;
-      padding: 10px;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      box-shadow: var(--shadow);
-    }
-    .role-badge {
-      background: var(--role-bg);
-      color: var(--role-text);
-      padding: 6px 12px;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: 800;
-      cursor: grab;
-      user-select: none;
-      border: 1px solid var(--primary);
-    }
-    .role-badge:active { cursor: grabbing; }
 
     .song-lyrics { white-space: pre-wrap; font-size: 1.15rem; line-height: 1.6; margin-top: 15px; }
     .song-chords {
@@ -325,20 +280,6 @@
       <div class="repertuar-header-title" id="repertuar-title-display">Brak ustawionego tytułu</div>
     </div>
 
-    <!-- PALETA RÓL (ADMIN ONLY) -->
-    <div class="admin-only hidden">
-      <label style="font-size: 0.85rem; font-weight: bold; color: var(--text-sub); display: block; margin-bottom: 6px;">
-        💡 Przeciągnij rolę na utwór poniżej:
-      </label>
-      <div class="roles-palette">
-        <div class="role-badge" draggable="true" ondragstart="handleDragStart(event, 'Wejście')">🏷️ Wejście</div>
-        <div class="role-badge" draggable="true" ondragstart="handleDragStart(event, 'Przygotowanie Darów')">🏷️ Przygotowanie Darów</div>
-        <div class="role-badge" draggable="true" ondragstart="handleDragStart(event, 'Komunia')">🏷️ Komunia</div>
-        <div class="role-badge" draggable="true" ondragstart="handleDragStart(event, 'Dziękczynienie')">🏷️ Dziękczynienie</div>
-        <div class="role-badge" draggable="true" ondragstart="handleDragStart(event, 'Zakończenie')">🏷️ Zakończenie</div>
-      </div>
-    </div>
-
     <div class="admin-only hidden" style="margin-bottom: 15px; background: var(--card-bg); padding: 12px; border-radius: 14px; border: 1px dashed var(--primary);">
       <label style="font-size: 0.85rem; font-weight: bold; color: var(--text-sub); display: block; margin-bottom: 6px;">Ustawienia Repertuaru (Admin):</label>
       <input type="text" id="repertuar-title-input" class="input-field" placeholder="Tytuł zestawu (np. Niedziela 24.05)" style="margin-bottom: 8px;">
@@ -363,10 +304,7 @@
   <div id="view-single" class="hidden">
     <div class="nav-bar">
       <button class="btn btn-secondary btn-small" onclick="goBackFromSong()">⬅️ Wróć</button>
-      <div>
-        <span id="view-role" class="song-role hidden"></span>
-        <span id="view-category" class="song-category"></span>
-      </div>
+      <span id="view-category" class="song-category"></span>
       <button class="btn btn-secondary btn-small admin-only hidden" onclick="editCurrentSong()">✏️ Edytuj</button>
     </div>
 
@@ -471,7 +409,6 @@
   let songs = [];
   let archives = [];
   let repertuarIds = [];
-  let repertuarRoles = {}; // { songId: roleName }
   let repertuarTitle = "Niedzielny Repertuar";
   let announcementsText = "";
 
@@ -559,11 +496,9 @@
       if (docSnap.exists()) {
         const data = docSnap.data();
         repertuarIds = data.songIds || [];
-        repertuarRoles = data.roles || {};
         repertuarTitle = data.title || "Bieżący Repertuar";
       } else {
         repertuarIds = [];
-        repertuarRoles = {};
         repertuarTitle = "Bieżący Repertuar";
       }
       renderRepertuarHeader();
@@ -657,7 +592,7 @@
     
     if (db) {
       try {
-        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds, roles: repertuarRoles, title: newTitle });
+        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds, title: newTitle });
         alert("Zapisano tytuł repertuaru!");
       } catch (e) {
         console.error("Błąd zapisu tytułu:", e);
@@ -707,7 +642,7 @@
       return;
     }
 
-    filtered.forEach(song => container.appendChild(createSongRow(song, false)));
+    filtered.forEach(song => container.appendChild(createSongRow(song)));
   }
 
   function renderRepertuar() {
@@ -723,7 +658,7 @@
       return;
     }
 
-    list.forEach(song => container.appendChild(createSongRow(song, true)));
+    list.forEach(song => container.appendChild(createSongRow(song)));
   }
 
   function renderArchives() {
@@ -755,93 +690,26 @@
     });
   }
 
-  function createSongRow(song, isRepertuarView = false) {
+  function createSongRow(song) {
     const div = document.createElement('div');
     div.className = 'song-item';
     const inRep = repertuarIds.includes(song.id);
     const audioIcon = (song.audioUrl && song.audioUrl.trim() !== '') ? ' 🎵' : '';
     const gestureIcon = song.isGesture ? ' 🙌' : '';
     
-    const roleName = repertuarRoles[song.id];
-    const roleHtml = (isRepertuarView && roleName) ? `<span class="song-role">🏷️ ${roleName}</span>` : '';
-
-    let adminButtons = '';
-    if (isAdmin) {
-      if (isRepertuarView) {
-        adminButtons = `
-          <div style="display:flex; gap:4px; align-items:center;">
-            <button class="btn btn-secondary btn-small" onclick="promptSetRole('${song.id}')">🏷️</button>
-            <button class="btn btn-secondary btn-small" onclick="toggleRepertuar('${song.id}')">➖</button>
-          </div>
-        `;
-      } else {
-        adminButtons = `
-          <button class="btn btn-secondary btn-small" onclick="toggleRepertuar('${song.id}')">
-            ${inRep ? '➖' : '➕'}
-          </button>
-        `;
-      }
-    }
-
-    if (isRepertuarView && isAdmin) {
-      div.ondragover = (e) => { e.preventDefault(); div.classList.add('drag-over'); };
-      div.ondragleave = () => { div.classList.remove('drag-over'); };
-      div.ondrop = (e) => handleDrop(e, song.id);
-    }
+    const adminToggleRepBtn = isAdmin ? `
+      <button class="btn btn-secondary btn-small" onclick="toggleRepertuar('${song.id}')">
+        ${inRep ? '➖' : '➕'}
+      </button>
+    ` : '';
 
     div.innerHTML = `
       <button class="song-title-btn" onclick="openSong('${song.id}')">
-        ${song.title}${gestureIcon}${audioIcon}<br>
-        ${roleHtml}<span class="song-category">${song.category || 'Uwielbienie'}</span>
+        ${song.title}${gestureIcon}${audioIcon} <span class="song-category">${song.category || 'Uwielbienie'}</span>
       </button>
-      ${adminButtons}
+      ${adminToggleRepBtn}
     `;
     return div;
-  }
-
-  // PRZECIĄGANIE I OPUSZCZANIE (DRAG & DROP)
-  window.handleDragStart = function(event, role) {
-    event.dataTransfer.setData("text/plain", role);
-  };
-
-  window.handleDrop = async function(event, songId) {
-    event.preventDefault();
-    document.querySelectorAll('.song-item').forEach(el => el.classList.remove('drag-over'));
-    const role = event.dataTransfer.getData("text/plain");
-    if (role) {
-      await assignRoleToSong(songId, role);
-    }
-  };
-
-  window.promptSetRole = async function(songId) {
-    const roles = ["Wejście", "Przygotowanie Darów", "Komunia", "Dziękczynienie", "Zakończenie", "(Usuń rolę)"];
-    const choice = prompt(`Wybierz rolę (wpisz numer):\n1. Wejście\n2. Przygotowanie Darów\n3. Komunia\n4. Dziękczynienie\n5. Zakończenie\n6. Usuń rolę`);
-    
-    if (choice >= "1" && choice <= "5") {
-      await assignRoleToSong(songId, roles[parseInt(choice) - 1]);
-    } else if (choice === "6") {
-      await assignRoleToSong(songId, null);
-    }
-  };
-
-  async function assignRoleToSong(songId, role) {
-    if (!role) {
-      delete repertuarRoles[songId];
-    } else {
-      repertuarRoles[songId] = role;
-    }
-
-    if (db) {
-      try {
-        await setDoc(doc(db, "repertuar", "current"), {
-          songIds: repertuarIds,
-          roles: repertuarRoles,
-          title: repertuarTitle
-        });
-      } catch (e) {
-        console.error("Błąd przypisywania roli:", e);
-      }
-    }
   }
 
   window.openSong = function(id) {
@@ -859,16 +727,6 @@
     const gestureIcon = song.isGesture ? ' 🙌' : '';
     document.getElementById('view-title').innerText = song.title + gestureIcon;
     document.getElementById('view-category').innerText = song.category || 'Uwielbienie';
-
-    const roleEl = document.getElementById('view-role');
-    const roleName = repertuarRoles[id];
-    if (roleName) {
-      roleEl.innerText = '🏷️ ' + roleName;
-      roleEl.classList.remove('hidden');
-    } else {
-      roleEl.classList.add('hidden');
-    }
-
     document.getElementById('view-lyrics').innerText = song.lyrics || '';
     
     renderChordsView();
@@ -974,14 +832,13 @@
     if (!isAdmin) return;
     if (repertuarIds.includes(id)) {
       repertuarIds = repertuarIds.filter(i => i !== id);
-      delete repertuarRoles[id];
     } else {
       repertuarIds.push(id);
     }
     
     if (db) {
       try {
-        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds, roles: repertuarRoles, title: repertuarTitle });
+        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds, title: repertuarTitle });
       } catch (e) {
         console.error("Błąd zapisu repertuaru:", e);
       }
@@ -995,12 +852,7 @@
 
     if (db) {
       try {
-        await addDoc(collection(db, "archives"), {
-          name,
-          songIds: [...repertuarIds],
-          roles: { ...repertuarRoles },
-          createdAt: new Date()
-        });
+        await addDoc(collection(db, "archives"), { name, songIds: [...repertuarIds], createdAt: new Date() });
         alert(`Zapisano zestaw "${name}" w chmurze!`);
       } catch (e) {
         console.error("Błąd zapisu archiwum:", e);
@@ -1012,12 +864,11 @@
     const arch = archives.find(a => a.id === id);
     if (!arch) return;
     repertuarIds = [...(arch.songIds || [])];
-    repertuarRoles = { ...(arch.roles || {}) };
     repertuarTitle = arch.name || "Repertuar z Archiwum";
 
     if (db && isAdmin) {
       try {
-        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds, roles: repertuarRoles, title: repertuarTitle });
+        await setDoc(doc(db, "repertuar", "current"), { songIds: repertuarIds, title: repertuarTitle });
       } catch (e) {
         console.error("Błąd ładowania archiwum:", e);
       }
@@ -1091,7 +942,7 @@
 
     try {
       if (id) {
-        if (db) await updateDoc(doc(doc(db, "songs", id)), songData);
+        if (db) await updateDoc(doc(db, "songs", id), songData);
       } else {
         if (db) await addDoc(collection(db, "songs"), songData);
       }
