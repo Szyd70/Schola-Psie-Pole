@@ -327,7 +327,6 @@
 
   const ADMIN_PIN = "1234";
 
-  // Dwa zestawy skal (duże i małe litery)
   const scaleMajor = ["C", "Cis", "D", "Dis", "E", "F", "Fis", "G", "Gis", "A", "B", "H"];
   const scaleMinor = ["c", "cis", "d", "dis", "e", "f", "fis", "g", "gis", "a", "b", "h"];
 
@@ -373,7 +372,8 @@
   const savedTheme = localStorage.getItem('schola_theme') || 'light';
   if (savedTheme === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
-    document.getElementById('theme-btn').innerText = "☀️";
+    const themeBtn = document.getElementById('theme-btn');
+    if (themeBtn) themeBtn.innerText = "☀️";
   }
 
   window.toggleTheme = function() {
@@ -420,7 +420,7 @@
     renderAll();
   }
 
-  // Synch z Firebase (Songbook & Repertuar & Archiwum)
+  // Synch z Firebase
   function initFirebaseSync() {
     if (!db) return;
 
@@ -624,12 +624,10 @@
     chordsEl.innerHTML = capoBadge + transposed;
   }
 
-  // Transpozycja z obsługą dużej i małej notacji polsko-niemieckiej (C/c, Cis/cis, B/b, H/h)
   function transposeChordsPL(chordsText, steps) {
     if (steps === 0) return chordsText;
 
     return chordsText.replace(/\b([A-Ga-g][is]*|[BHbh])(maj7|7|sus4|add9|dim)?\b/g, (match, root, suffix) => {
-      // Szukanie w tonacji dużej
       let idxMajor = scaleMajor.indexOf(root);
       if (idxMajor !== -1) {
         let newIdx = (idxMajor + steps) % 12;
@@ -637,7 +635,6 @@
         return scaleMajor[newIdx] + (suffix || '');
       }
 
-      // Szukanie w tonacji małej
       let idxMinor = scaleMinor.indexOf(root);
       if (idxMinor !== -1) {
         let newIdx = (idxMinor + steps) % 12;
@@ -760,6 +757,7 @@
     });
   };
 
+  // EXPOSED ADMIN & FORM FUNCTIONS (Wcześniej brakujące w globalnym obiekcie window)
   window.openAddForm = function() {
     if (!isAdmin) return;
     document.getElementById('form-header').innerText = "Dodaj Utwór";
@@ -770,7 +768,7 @@
     document.getElementById('form-lyrics').value = "";
     document.getElementById('form-chords').value = "";
     document.getElementById('btn-delete').classList.add('hidden');
-    showView('view-form');
+    window.showView('view-form');
   };
 
   window.editCurrentSong = function() {
@@ -786,7 +784,7 @@
     document.getElementById('form-lyrics').value = song.lyrics || "";
     document.getElementById('form-chords').value = song.chords || "";
     document.getElementById('btn-delete').classList.remove('hidden');
-    showView('view-form');
+    window.showView('view-form');
   };
 
   window.saveSong = async function() {
@@ -808,7 +806,7 @@
       } else {
         if (db) await addDoc(collection(db, "songs"), songData);
       }
-      showView('view-songs');
+      window.showView('view-songs');
     } catch (e) {
       console.error("Błąd zapisu do chmury:", e);
       alert("Błąd zapisu w chmurze! Sprawdź reguły Firebase Firestore.");
@@ -822,7 +820,7 @@
     
     try {
       if (db) await deleteDoc(doc(db, "songs", id));
-      showView('view-songs');
+      window.showView('view-songs');
     } catch (e) {
       console.error("Błąd usuwania z chmury:", e);
       alert("Nie udało się usunąć utworu z chmury.");
@@ -832,7 +830,7 @@
   window.openBulkForm = function() {
     if (!isAdmin) return;
     document.getElementById('form-bulk-text').value = "";
-    showView('view-bulk');
+    window.showView('view-bulk');
   };
 
   window.processBulkImport = async function() {
@@ -905,7 +903,7 @@
     }
 
     alert(`Zaimportowano ${count} utworów do chmury!`);
-    showView('view-songs');
+    window.showView('view-songs');
   };
 
   initFirebaseSync();
