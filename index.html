@@ -26,6 +26,8 @@
       --border: #e9ecef;
       --chords-bg: #f1f9ff;
       --shadow: 0 8px 20px rgba(17, 138, 178, 0.08);
+      --announcement-bg: #fff8e7;
+      --announcement-border: #ffd166;
     }
 
     [data-theme="dark"] {
@@ -40,6 +42,8 @@
       --border: #343d52;
       --chords-bg: #1c2333;
       --shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      --announcement-bg: #2b2a1f;
+      --announcement-border: #d4a373;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Nunito', system-ui, -apple-system, sans-serif; }
@@ -55,10 +59,41 @@
       height: 200px;
       border-radius: 20px;
       overflow: hidden;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       display: flex;
       justify-content: center;
       align-items: center;
+    }
+
+    /* SEKCJA OGŁOSZEŃ */
+    .announcement-box {
+      background-color: var(--announcement-bg);
+      border: 2px solid var(--announcement-border);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+    .announcement-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .announcement-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .announcement-text {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      color: var(--text);
     }
 
     .btn {
@@ -209,6 +244,15 @@
       <img src="1787475381723.png" alt="Logo Scholi" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;">
     </div>
 
+    <!-- SEKCJA BIEŻĄCYCH OGŁOSZEŃ -->
+    <div class="announcement-box" id="announcement-card">
+      <div class="announcement-header">
+        <span class="announcement-title">📢 Bieżące Ogłoszenia</span>
+        <button class="btn btn-secondary btn-small admin-only hidden" onclick="openAnnouncementForm()">✏️ Edytuj</button>
+      </div>
+      <div class="announcement-text" id="announcement-display-text">Brak aktualnych ogłoszeń.</div>
+    </div>
+
     <button class="btn btn-filled" onclick="showView('view-songs')">📖 Przeglądaj Śpiewnik</button>
     <button class="btn btn-filled" onclick="showView('view-repertuar')">📌 Bieżący Repertuar</button>
     <button class="btn btn-filled" onclick="showView('view-archive')">📁 Archiwum Repertuarów</button>
@@ -218,6 +262,17 @@
       <button class="btn btn-secondary" onclick="openAddForm()">➕ Dodaj Utwór</button>
       <button class="btn btn-secondary" onclick="openBulkForm()">📥 Dodaj masowo utwory</button>
     </div>
+  </div>
+
+  <!-- WIDOK: EDYCYJNY OGŁOSZEŃ (ADMIN) -->
+  <div id="view-announcement-form" class="hidden">
+    <div class="nav-bar">
+      <button class="btn btn-secondary btn-small" onclick="showView('view-home')">Anuluj</button>
+      <h2>Edytuj Ogłoszenia</h2>
+      <div></div>
+    </div>
+    <textarea id="announcement-input" class="input-field" style="height: 200px;" placeholder="Wpisz treść ogłoszeń..."></textarea>
+    <button class="btn btn-filled" onclick="saveAnnouncement()">💾 Zapisz Ogłoszenie</button>
   </div>
 
   <!-- WIDOK: ŚPIEWNIK -->
@@ -285,7 +340,7 @@
     <div id="view-lyrics" class="song-lyrics"></div>
   </div>
 
-  <!-- WIDOK: FORMULARZ DODAWANIA / EDYCJI -->
+  <!-- WIDOK: FORMULARZ DODAWANIA / EDYCJI UTWORU -->
   <div id="view-form" class="hidden">
     <div class="nav-bar">
       <button class="btn btn-secondary btn-small" onclick="showView('view-songs')">Anuluj</button>
@@ -357,7 +412,8 @@
   let songs = [];
   let archives = [];
   let repertuarIds = [];
-  let repertuarRoles = {}; // Mapowanie: songId -> rola (np. "Wejście")
+  let repertuarRoles = {}; 
+  let currentAnnouncement = "Brak aktualnych ogłoszeń.";
 
   let isAdmin = false;
   let activeCategory = 'Wszystkie';
@@ -498,7 +554,39 @@
       archives = fetchedArch;
       renderArchives();
     });
+
+    // Synchronizacja ogłoszeń z Firebase
+    onSnapshot(doc(db, "announcements", "main"), (docSnap) => {
+      if (docSnap.exists() && docSnap.data().text) {
+        currentAnnouncement = docSnap.data().text;
+      } else {
+        currentAnnouncement = "Brak aktualnych ogłoszeń.";
+      }
+      document.getElementById('announcement-display-text').innerText = currentAnnouncement;
+    });
   }
+
+  window.openAnnouncementForm = function() {
+    if (!isAdmin) return;
+    document.getElementById('announcement-input').value = currentAnnouncement === "Brak aktualnych ogłoszeń." ? "" : currentAnnouncement;
+    showView('view-announcement-form');
+  };
+
+  window.saveAnnouncement = async function() {
+    if (!isAdmin) return;
+    const text = document.getElementById('announcement-input').value.trim();
+    const textToSave = text !== "" ? text : "Brak aktualnych ogłoszeń.";
+
+    if (db) {
+      try {
+        await setDoc(doc(db, "announcements", "main"), { text: textToSave, updatedAt: new Date() });
+        showView('view-home');
+      } catch (e) {
+        console.error("Błąd zapisu ogłoszenia:", e);
+        alert("Wystąpił błąd podczas zapisu ogłoszenia.");
+      }
+    }
+  };
 
   window.showView = function(viewId) {
     stopAutoScroll();
@@ -569,7 +657,6 @@
       return;
     }
 
-    // Sortowanie według kolejności liturgicznej: Wejście -> Ofiarowanie -> Komunia -> Uwielbienie -> Zakończenie -> Inne
     list.sort((a, b) => {
       const roleA = repertuarRoles[a.id] || '';
       const roleB = repertuarRoles[b.id] || '';
